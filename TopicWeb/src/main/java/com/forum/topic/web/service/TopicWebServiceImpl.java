@@ -1,0 +1,308 @@
+package com.forum.topic.web.service;
+
+import com.forum.topic.kafka.event.OperationKafka;
+import com.forum.kafka.request_reply_util.CompletableFutureReplyingKafkaOperations;
+import com.forum.topic.kafka.event.Topic;
+import com.forum.topic.kafka.event.Topics;
+import com.forum.topic.kafka.event.UserDetailsRole;
+import com.forum.topic.web.controller.TopicRestController;
+import com.forum.topic.web.hateoas.model.TopicRest;
+import com.forum.topic.web.model.TopicWebDto;
+import lombok.NoArgsConstructor;
+import org.apache.catalina.User;
+import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.Link;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.async.DeferredResult;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+@Service
+//@RequiredArgsConstructor
+@NoArgsConstructor
+public class TopicWebServiceImpl implements TopicWebService {
+    private final Logger LOGGER = LoggerFactory.getLogger(TopicWebServiceImpl.class);
+    @Autowired
+    private CompletableFutureReplyingKafkaOperations<String, Topics, Topics> replyingKafkaTemplate;
+    @Autowired
+    private ModelMapper modelMapper;
+    @Value("${kafka.topic.product.request}")
+    private String requestTopic;
+
+    @Value("${kafka.topic.product.reply}")
+    private String requestReplyTopic;
+
+    public DeferredResult<ResponseEntity<CollectionModel<TopicRest>>> listTopic(
+            Integer page, Integer numberPerPage, Long headerUserId, UserDetailsRole role){
+        DeferredResult<ResponseEntity<CollectionModel<TopicRest>>> deferredResult = new DeferredResult<>();
+
+        Topics topicsRequest = new Topics();
+        topicsRequest.setHeaderUserId(headerUserId);
+        topicsRequest.setRole(role);
+        topicsRequest.setPage(page);
+        topicsRequest.setNumberPerPage(numberPerPage);
+        topicsRequest.setOperation(OperationKafka.RETREIVE_ALL);  //Directories.RETREIVE_ALL)
+
+        CompletableFuture<Topics> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, topicsRequest);
+
+        completableFuture.thenAccept(directories -> {
+
+            List<Topic> topicList = directories.getTopics();
+
+            Link links[] = { linkTo(methodOn(TopicRestController.class).getAllPosts(page,numberPerPage,null)).withSelfRel(),
+                    linkTo(methodOn(TopicRestController.class).getAllPosts(page,numberPerPage,null)).withRel("getAllDirectories") };
+
+            List<TopicRest> list = new ArrayList<TopicRest>();
+            for (Topic topic : topicList) {
+                TopicRest directoryHateoas = convertEntityToHateoasEntity(topic);
+                list.add(directoryHateoas
+                        .add(linkTo(methodOn(TopicRestController.class).getTopic(directoryHateoas.getPostId(),null))//directoryHateoas.getDirectoryId
+                                .withSelfRel()));
+
+            }
+            list.forEach(item -> LOGGER.debug(item.toString()));
+            CollectionModel<TopicRest> result = CollectionModel.of(list, links);
+
+            deferredResult.setResult(new ResponseEntity<CollectionModel<TopicRest>>(result, HttpStatus.OK));
+
+        }).exceptionally(ex -> {
+            LOGGER.error(ex.getMessage());
+            return null;
+        });
+
+        //delay();
+        return deferredResult;
+    }
+
+
+    public DeferredResult<ResponseEntity<TopicRest>> getTopic(Long id, Long headerUserId, UserDetailsRole role){
+        DeferredResult<ResponseEntity<TopicRest>> deferredResult = new DeferredResult<>();
+
+        Topics topicsRequest = new Topics();
+        topicsRequest.setHeaderUserId(headerUserId);
+        topicsRequest.setRole(role);
+        topicsRequest.setOperation(OperationKafka.RETREIVE_DETAILS);//Directories.RETREIVE_DETAILS
+        Topic topic = new Topic();
+
+        topic.setPostId(id);//// почему так я не понял Нафига
+        List<Topic> topicRequestList = new ArrayList<>();
+        topicRequestList.add(topic);
+        topicsRequest.setTopics(topicRequestList);
+
+        CompletableFuture<Topics> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, topicsRequest);
+
+        completableFuture.thenAccept(directories -> {
+
+            List<Topic> topicList = directories.getTopics();
+            Topic topicRetreived = null;
+            Long postId = null; // String directoryId
+
+            if (topicList.iterator().hasNext()) {
+                topicRetreived = topicList.iterator().next();
+                postId = topicRetreived.getPostId();//postRetreived.getDirectoryId()
+                LOGGER.debug("Product with productId : {} retreived from Backend Microservice", postId);
+
+                TopicRest directoryHateoas = convertEntityToHateoasEntity(topicRetreived);
+                directoryHateoas.add(linkTo(methodOn(TopicRestController.class).getTopic(directoryHateoas.getPostId(),null)).withSelfRel()); //directoryHateoas.getDirectoryId())).withSelfRel
+
+                deferredResult.setResult(new ResponseEntity<TopicRest>(directoryHateoas, HttpStatus.OK));
+
+            }
+            else {
+                LOGGER.debug("Product with productId : {} not retreived from Backend Microservice", id);
+                deferredResult.setResult(new ResponseEntity<TopicRest>(HttpStatus.NOT_FOUND));
+            }
+
+        }).exceptionally(ex -> {
+            LOGGER.error(ex.getMessage());
+            return null;
+        });
+        return deferredResult;
+    }
+//    public DeferredResult<ResponseEntity<TopicRest>> getTopic(Long id, Long headerUserId, UserDetailsRole role){
+//        DeferredResult<ResponseEntity<TopicRest>> deferredResult = new DeferredResult<>();
+//
+//        Topics topicsRequest = new Topics();
+//        topicsRequest.setHeaderUserId(headerUserId);
+//        topicsRequest.setRole(role);
+//        topicsRequest.setOperation(OperationKafka.RETREIVE_DETAILS);//Directories.RETREIVE_DETAILS
+//        Topic topic = new Topic();
+//
+//        topic.setPostId(id);//// почему так я не понял Нафига
+//        List<Topic> topicRequestList = new ArrayList<>();
+//        topicRequestList.add(topic);
+//        topicsRequest.setTopics(topicRequestList);
+//
+//        CompletableFuture<Topics> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, topicsRequest);
+//
+//        completableFuture.thenAccept(directories -> {
+//
+//            List<Topic> topicList = directories.getTopics();
+//            Topic topicRetreived = null;
+//            Long postId = null; // String directoryId
+//
+//            if (topicList.iterator().hasNext()) {
+//                topicRetreived = topicList.iterator().next();
+//                postId = topicRetreived.getPostId();//postRetreived.getDirectoryId()
+//                LOGGER.debug("Product with productId : {} retreived from Backend Microservice", postId);
+//
+//                TopicRest directoryHateoas = convertEntityToHateoasEntity(topicRetreived);
+//                directoryHateoas.add(linkTo(methodOn(TopicRestController.class).getTopic(directoryHateoas.getPostId(),null)).withSelfRel()); //directoryHateoas.getDirectoryId())).withSelfRel
+//
+//                deferredResult.setResult(new ResponseEntity<TopicRest>(directoryHateoas, HttpStatus.OK));
+//
+//            }
+//            else {
+//                LOGGER.debug("Product with productId : {} not retreived from Backend Microservice", id);
+//                deferredResult.setResult(new ResponseEntity<TopicRest>(HttpStatus.NOT_FOUND));
+//            }
+//
+//        }).exceptionally(ex -> {
+//            LOGGER.error(ex.getMessage());
+//            return null;
+//        });
+//        return deferredResult;
+//    }
+    public DeferredResult<ResponseEntity<TopicRest>> createTopic(TopicWebDto createTopicRest) throws ExecutionException, InterruptedException{
+        DeferredResult<ResponseEntity<TopicRest>> deferredResult = new DeferredResult<>();
+
+        Topic topicRest =modelMapper.map(createTopicRest,  Topic.class); // очень интересно, сработает ли
+        topicRest.setPostId(null);
+        Topics topicsRequest = new Topics();
+        topicsRequest.setOperation(OperationKafka.CREATE);//Directories.CREATE
+        List<Topic> topicRequestList = new ArrayList<>();
+        topicRequestList.add(topicRest);
+        topicsRequest.setTopics(topicRequestList);
+
+        CompletableFuture<Topics> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, topicsRequest);
+
+        completableFuture.thenAccept(directories -> {
+
+            List<Topic> topicList = directories.getTopics();
+            Topic topicRetreived = null;
+            Long postId = null; //String directoryId
+
+            if (topicList.iterator().hasNext()) {
+                topicRetreived = topicList.iterator().next();
+                postId = topicRetreived.getPostId(); //postRetreived.getDirectoryId();
+                LOGGER.debug("Product with productId : {} created by Backend Microservice", postId);
+
+                TopicRest directoryHateoas = convertEntityToHateoasEntity(topicRetreived);
+                directoryHateoas.add(linkTo(methodOn(TopicRestController.class).getTopic(directoryHateoas.getPostId(),null)).withSelfRel()); //directoryHateoas.getDirectoryId())).withSelfRel
+                deferredResult.setResult(new ResponseEntity<TopicRest>(directoryHateoas, HttpStatus.OK));
+
+            }
+            else {
+                LOGGER.debug("Product with code : {} not created by Backend Microservice");//, directory.getCode());
+                deferredResult.setResult(new ResponseEntity<TopicRest>(HttpStatus.CONFLICT));
+            }
+
+        }).exceptionally(ex -> {
+            LOGGER.error(ex.getMessage());
+            return null;
+        });
+
+        LOGGER.info("Ending");
+        return deferredResult;
+    }
+    public DeferredResult<ResponseEntity<TopicRest>> updatePost(Long id, TopicWebDto topicDto, Long headerUserId, UserDetailsRole role) {
+        DeferredResult<ResponseEntity<TopicRest>> deferredResult = new DeferredResult<>();
+        Topic topic =modelMapper.map(topicDto,  Topic.class);
+        Topics topicsRequest = new Topics();
+        topicsRequest.setHeaderUserId(headerUserId);
+        topicsRequest.setRole(role);
+        topicsRequest.setOperation(OperationKafka.UPDATE);//Directories.UPDATE
+        topic.setPostId(id); // but may be i need different way - give Post object as it is
+        List<Topic> topicRequestList = new ArrayList<>();
+        topicRequestList.add(topic);
+        topicsRequest.setTopics(topicRequestList);
+
+        CompletableFuture<Topics> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, topicsRequest);
+
+        completableFuture.thenAccept(directories -> {
+
+            List<Topic> topicList = directories.getTopics();
+            Topic topicRetreived = null;
+            Long postId = null; //String directoryId
+
+            if (topicList.iterator().hasNext()) {
+                topicRetreived = topicList.iterator().next();
+                postId = topicRetreived.getPostId();//postRetreived.getDirectoryId
+                LOGGER.debug("Product with productId : {} updated by Backend Microservice", postId);
+
+                TopicRest directoryHateoas = convertEntityToHateoasEntity(topicRetreived);
+                directoryHateoas.add(linkTo(methodOn(TopicRestController.class).getTopic(directoryHateoas.getPostId(),null)).withSelfRel()); //getDirectoryId())).withSelfRel()
+                deferredResult.setResult(new ResponseEntity<TopicRest>(directoryHateoas, HttpStatus.OK));
+
+            }
+            else {
+                LOGGER.debug("Product with code : {} not updated by Backend Microservice", id);
+                deferredResult.setResult(new ResponseEntity<TopicRest>(HttpStatus.NOT_FOUND));
+            }
+
+
+        }).exceptionally(ex -> {
+            LOGGER.error(ex.getMessage());
+            return null;
+        });
+        return deferredResult;
+    }
+    public DeferredResult<ResponseEntity<Topic>> deletePost(Long id, Long headerUserId, UserDetailsRole role){//////////
+        DeferredResult<ResponseEntity<Topic>> deferredResult = new DeferredResult<>();
+
+        Topics topicsRequest = new Topics();
+        topicsRequest.setHeaderUserId(headerUserId);
+        topicsRequest.setRole(role);
+        topicsRequest.setOperation(OperationKafka.DELETE);//Directories.DELETE
+        List<Topic> topicRequestList = new ArrayList<>();
+        Topic topicToDelete = new Topic();
+        topicToDelete.setPostId(id);
+        //postToDelete.setCreationDate(new Timestamp(System.currentTimeMillis()));
+        //directoryToDelete.setOrder(0L);
+        //postToDelete.setPostContent(null);//.setOrder(null);
+        //postToDelete.setChangeDate(null);//.setSubDirId(null);
+        //postToDelete.setPostId(null);
+//		directoryToDelete.setName("");
+//		directoryToDelete.setCode("");
+//		directoryToDelete.setTitle("");
+//		directoryToDelete.setPrice(0D);
+        topicRequestList.add(topicToDelete);
+        topicsRequest.setTopics(topicRequestList);
+
+        CompletableFuture<Topics> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, topicsRequest);
+
+        completableFuture.thenAccept(directories -> {
+
+            if (directories.getOperation().equals(OperationKafka.SUCCESS)) {//contentEquals
+                LOGGER.debug("Product with productId : {} deleted by Backend Microservice", id);
+                deferredResult.setResult(new ResponseEntity<Topic>(HttpStatus.NO_CONTENT));
+
+            }
+            else {
+                LOGGER.debug("Product with id : {} suspected not deleted by Backend Microservice", id);
+                deferredResult.setResult(new ResponseEntity<Topic>(HttpStatus.NOT_FOUND));
+            }
+
+        }).exceptionally(ex -> {
+            LOGGER.error(ex.getMessage());
+            return null;
+        });
+        return deferredResult;
+    }
+        private TopicRest convertEntityToHateoasEntity(Topic topic){
+        return  modelMapper.map(topic,  TopicRest.class);
+    }
+
+}

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Annotation profile for security-template" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="/media/user/downloads1/.m2/repository/org/projectlombok/lombok/1.18.26/lombok-1.18.26.jar" />
+          <entry name="/media/user/downloads1/.m2/repository/org/mapstruct/mapstruct-processor/1.5.5.Final/mapstruct-processor-1.5.5.Final.jar" />
+          <entry name="/media/user/downloads1/.m2/repository/org/mapstruct/mapstruct/1.5.5.Final/mapstruct-1.5.5.Final.jar" />
+        </processorPath>
+        <module name="post-Server-Microservice" />
+        <module name="topic-Server-Microservice" />
+        <module name="directory-Server-Microservice" />
+      </profile>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="directory-Web-Microservice" />
+        <module name="authorization-server" />
+        <module name="resource-server" />
+        <module name="post-Web-Microservice" />
+        <module name="auth-gateway-server" />
+        <module name="kafka-request-reply-util" />
+        <module name="topic-Web-Microservice" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="auth-gateway-server" options="-parameters" />
+      <module name="authorization-server" options="-parameters" />
+      <module name="directory-Server-Microservice" options="-parameters" />
+      <module name="directory-Web-Microservice" options="-parameters" />
+      <module name="post-Server-Microservice" options="-parameters" />
+      <module name="post-Web-Microservice" options="-parameters" />
+      <module name="resource-server" options="-parameters" />
+      <module name="topic-Server-Microservice" options="-parameters" />
+      <module name="topic-Web-Microservice" options="-parameters" />
+    </option>
+  </component>
+</project>

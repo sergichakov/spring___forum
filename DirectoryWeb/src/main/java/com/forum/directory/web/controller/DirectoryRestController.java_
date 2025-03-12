@@ -1,0 +1,424 @@
+/*
+ * Copyright (c) 2024/2025 Binildas A Christudas & Apress
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.forum.directory.web.controller;
+
+import com.forum.directory.web.hateoas.model.DirectoryRest;
+import com.forum.directory.kafka.event.Directories;
+
+//import se.callista.blog.synch_kafka.request_reply_util.CompletableFutureReplyingKafkaOperations;
+import com.forum.directory.kafka.event.OperationDirectoryKafka;
+
+import com.forum.directory.kafka.event.Directory;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.async.DeferredResult;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+
+import org.springframework.web.bind.annotation.CrossOrigin;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.Link;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.util.concurrent.CompletableFuture;
+
+import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.forum.kafka.request_reply_util.CompletableFutureReplyingKafkaOperations;
+
+import java.util.List;
+import java.util.ArrayList;
+
+/**
+ * @author <a href="mailto:biniljava<[@.]>yahoo.co.in">Binildas C. A.</a>
+ */
+//@CrossOrigin
+
+//@RestController
+ class DirectoryRestController222222222222222222222222222222222 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DirectoryRestController222222222222222222222222222222222.class);
+
+    @Autowired
+    private CompletableFutureReplyingKafkaOperations<String, Directories, Directories> replyingKafkaTemplate;
+
+    @Autowired
+    private ModelMapper modelMapper;
+
+    @Value("${kafka.topic.product.request}")
+    private String requestTopic;
+
+    @Value("${kafka.topic.product.reply}")
+    private String requestReplyTopic;
+    @RequestMapping(value = "/directoryweb", method = RequestMethod.GET ,produces = {MediaType.APPLICATION_JSON_VALUE})
+    public List<Directory> getAllDirectories(){
+		LOGGER.info("Start");
+		DeferredResult<ResponseEntity<CollectionModel<DirectoryRest>>> deferredResult = new DeferredResult<>();
+
+		Directories directoriesRequest = new Directories();
+		directoriesRequest.setOperation(OperationKafka.RETREIVE_ALL); //Directories.RETREIVE_ALL)
+
+		CompletableFuture<Directories> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
+		List <Directory> directories1=new ArrayList<>();
+		completableFuture.thenAccept(directories -> {
+			LOGGER.info("added directories");
+            for(Directory d:directories.getDirectories()){
+                LOGGER.info("received directory"+ d);
+            }
+			directories1.addAll(directories.getDirectories());
+
+		});
+		return directories1;
+    }
+/*	@RequestMapping(value = "/directoryweb", method = RequestMethod.GET ,produces = {MediaType.APPLICATION_JSON_VALUE})
+    public DeferredResult<ResponseEntity<CollectionModel<DirectoryRest>>> getAllDirectories(){
+
+        LOGGER.info("Start");
+        DeferredResult<ResponseEntity<CollectionModel<DirectoryRest>>> deferredResult = new DeferredResult<>();
+
+        Directories directoriesRequest = new Directories();
+        directoriesRequest.setOperation(Directories.RETREIVE_ALL);
+
+        CompletableFuture<Directories> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
+
+        completableFuture.thenAccept(directories -> {
+
+            List<Directory> directoryList = directories.getDirectories();
+
+            Link links[] = { linkTo(methodOn(DirectoryRestController.class).getAllDirectories()).withSelfRel(),
+                    linkTo(methodOn(DirectoryRestController.class).getAllDirectories()).withRel("getAllDirectories") };
+
+            List<DirectoryRest> list = new ArrayList<DirectoryRest>();
+            for (Directory directory : directoryList) {
+
+                DirectoryRest directoryHateoas = convertEntityToHateoasEntity(directory);
+                //list.add(directoryHateoas.add(directory.getDirectoryId())
+                list.add(directoryHateoas
+                        .add(linkTo(methodOn(DirectoryRestController.class).getDirectory(directoryHateoas.getDirectoryId()))
+                                .withSelfRel()));
+            }
+            list.forEach(item -> LOGGER.debug(item.toString()));
+            CollectionModel<DirectoryRest> result = CollectionModel.of(list, links);
+
+            deferredResult.setResult(new ResponseEntity<CollectionModel<DirectoryRest>>(result, HttpStatus.OK));
+
+        }).exceptionally(ex -> {
+            LOGGER.error(ex.getMessage());
+            return null;
+        });
+
+        //delay();
+
+        LOGGER.info("Ending");
+        return deferredResult;
+    }
+    private DirectoryRest convertEntityToHateoasEntity(Directory directory){
+        return  modelMapper.map(directory,  DirectoryRest.class);
+    }*/
+}
+
+@CrossOrigin
+@RestController
+public class DirectoryRestController {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(DirectoryRestController.class);
+
+	  @Autowired
+	  private CompletableFutureReplyingKafkaOperations<String, Directories, Directories> replyingKafkaTemplate;
+
+	  @Autowired
+	  private ModelMapper modelMapper;
+
+	  @Value("${kafka.topic.product.request}")
+	  private String requestTopic;
+	  
+	  @Value("${kafka.topic.product.reply}")
+	  private String requestReplyTopic;
+	
+	//------------------- Retreive all Products --------------------------------------------------------
+    @RequestMapping(value = "/directoriesweb", method = RequestMethod.GET ,produces = {MediaType.APPLICATION_JSON_VALUE})
+	public DeferredResult<ResponseEntity<CollectionModel<DirectoryRest>>> getAllDirectories(){
+
+    	LOGGER.info("Start");
+		DeferredResult<ResponseEntity<CollectionModel<DirectoryRest>>> deferredResult = new DeferredResult<>();
+
+		Directories directoriesRequest = new Directories();
+		directoriesRequest.setOperation(OperationKafka.RETREIVE_ALL);  //Directories.RETREIVE_ALL)
+        
+        CompletableFuture<Directories> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
+        
+        completableFuture.thenAccept(directories -> {
+        	
+        	List<Directory> directoryList = directories.getDirectories();
+        	
+			Link links[] = { linkTo(methodOn(DirectoryRestController.class).getAllDirectories()).withSelfRel(),
+					linkTo(methodOn(DirectoryRestController.class).getAllDirectories()).withRel("getAllDirectories") };
+
+			List<DirectoryRest> list = new ArrayList<DirectoryRest>();
+			for (Directory directory : directoryList) {
+				DirectoryRest directoryHateoas = convertEntityToHateoasEntity(directory);
+				list.add(directoryHateoas
+						.add(linkTo(methodOn(DirectoryRestController.class).getDirectory(directoryHateoas.getDirectoryId()))
+								.withSelfRel()));
+
+			}
+			list.forEach(item -> LOGGER.debug(item.toString()));
+			CollectionModel<DirectoryRest> result = CollectionModel.of(list, links);
+			
+			deferredResult.setResult(new ResponseEntity<CollectionModel<DirectoryRest>>(result, HttpStatus.OK));
+        	
+        }).exceptionally(ex -> {
+        	LOGGER.error(ex.getMessage());
+        	return null;
+        });
+        
+        //delay();
+        
+        LOGGER.info("Ending");
+        return deferredResult;
+    }
+    
+    private void delay() {
+        
+        long secondsToSleep = 6;
+        LOGGER.debug(Thread.currentThread().toString());
+        LOGGER.debug("Starting to Sleep Seconds : " + secondsToSleep);
+
+        try{
+            Thread.sleep(1000 * secondsToSleep);
+        }
+        catch(Exception e) {
+            LOGGER.error("Error : " + e);
+        }
+        LOGGER.debug("Awakening from Sleep...");
+ 		
+    }
+
+  //------------------- Retreive a Product --------------------------------------------------------
+    @RequestMapping(value = "/directoriesweb/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public DeferredResult<ResponseEntity<DirectoryRest>> getDirectory(@PathVariable("id") Long id) {//String id
+    	
+    	LOGGER.info("Start");
+    	LOGGER.debug("Fetching Product with id: {}", id);
+		LOGGER.info("Thread : " + Thread.currentThread());
+		DeferredResult<ResponseEntity<DirectoryRest>> deferredResult = new DeferredResult<>();
+
+		Directories directoriesRequest = new Directories();
+		directoriesRequest.setOperation(OperationKafka.RETREIVE_DETAILS);//Directories.RETREIVE_DETAILS
+		Directory directory = new Directory();
+		directory.setDirectoryId(id);
+		List<Directory> directoryRequestList = new ArrayList<>();
+		directoryRequestList.add(directory);
+		directoriesRequest.setDirectories(directoryRequestList);
+		
+        CompletableFuture<Directories> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
+        
+        completableFuture.thenAccept(directories -> {
+        	
+        	List<Directory> directoryList = directories.getDirectories();
+        	Directory directoryRetreived = null;
+        	Long directoryId = null; // String directoryId
+
+            if (directoryList.iterator().hasNext()) {
+            	directoryRetreived = directoryList.iterator().next();
+            	directoryId = directoryRetreived.getDirectoryId();
+            	LOGGER.debug("Product with productId : {} retreived from Backend Microservice", directoryId);
+
+				DirectoryRest directoryHateoas = convertEntityToHateoasEntity(directoryRetreived);
+				directoryHateoas.add(linkTo(methodOn(DirectoryRestController.class).getDirectory(directoryHateoas.getDirectoryId())).withSelfRel());
+
+            	deferredResult.setResult(new ResponseEntity<DirectoryRest>(directoryHateoas, HttpStatus.OK));
+
+            }
+            else {
+            	LOGGER.debug("Product with productId : {} not retreived from Backend Microservice", id);
+            	deferredResult.setResult(new ResponseEntity<DirectoryRest>(HttpStatus.NOT_FOUND));
+            }
+           
+        }).exceptionally(ex -> {
+        	LOGGER.error(ex.getMessage());
+        	return null;
+        });
+    	
+        LOGGER.info("Ending");
+        return deferredResult;
+    }
+
+
+    //------------------- Create a Product --------------------------------------------------------
+    @RequestMapping(value = "/directoriesweb", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public DeferredResult<ResponseEntity<DirectoryRest>> addDirectory(@RequestBody Directory directory) {
+    	
+    	LOGGER.info("Start");
+    	LOGGER.debug("Creating Product with code: {}");//, directory.getCode());
+    	
+		LOGGER.info("Thread : " + Thread.currentThread());
+		DeferredResult<ResponseEntity<DirectoryRest>> deferredResult = new DeferredResult<>();
+
+		Directories directoriesRequest = new Directories();
+		directoriesRequest.setOperation(OperationKafka.CREATE);//Directories.CREATE
+		List<Directory> directoryRequestList = new ArrayList<>();
+		directoryRequestList.add(directory);
+		directoriesRequest.setDirectories(directoryRequestList);
+        
+        CompletableFuture<Directories> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
+        
+        completableFuture.thenAccept(directories -> {
+        	
+        	List<Directory> directoryList = directories.getDirectories();
+        	Directory directoryRetreived = null;
+        	Long directoryId = null; //String directoryId
+
+            if (directoryList.iterator().hasNext()) {
+            	directoryRetreived = directoryList.iterator().next();
+            	directoryId = directoryRetreived.getDirectoryId();
+            	LOGGER.debug("Product with productId : {} created by Backend Microservice", directoryId);
+
+				DirectoryRest directoryHateoas = convertEntityToHateoasEntity(directoryRetreived);
+				directoryHateoas.add(linkTo(methodOn(DirectoryRestController.class).getDirectory(directoryHateoas.getDirectoryId())).withSelfRel());
+            	deferredResult.setResult(new ResponseEntity<DirectoryRest>(directoryHateoas, HttpStatus.OK));
+
+            }
+            else {
+            	LOGGER.debug("Product with code : {} not created by Backend Microservice");//, directory.getCode());
+				deferredResult.setResult(new ResponseEntity<DirectoryRest>(HttpStatus.CONFLICT));
+            }
+           
+        }).exceptionally(ex -> {
+        	LOGGER.error(ex.getMessage());
+        	return null;
+        });
+    	
+        LOGGER.info("Ending");
+        return deferredResult;
+    }
+
+
+    //------------------- Update a Product --------------------------------------------------------
+    @RequestMapping(value = "/directoriesweb/{directoryId}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    public DeferredResult<ResponseEntity<DirectoryRest>> updateDirectory(@PathVariable("directoryId")String id, @RequestBody Directory directory) {
+    	
+    	LOGGER.info("Start");
+    	LOGGER.debug("Updating Product with id: {}", id);
+        
+		LOGGER.info("Thread : " + Thread.currentThread());
+		DeferredResult<ResponseEntity<DirectoryRest>> deferredResult = new DeferredResult<>();
+
+		Directories directoriesRequest = new Directories();
+		directoriesRequest.setOperation(OperationKafka.UPDATE);//Directories.UPDATE
+		List<Directory> directoryRequestList = new ArrayList<>();
+		directoryRequestList.add(directory);
+		directoriesRequest.setDirectories(directoryRequestList);
+        
+        CompletableFuture<Directories> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
+        
+        completableFuture.thenAccept(directories -> {
+        	
+        	List<Directory> directoryList = directories.getDirectories();
+        	Directory directoryRetreived = null;
+        	Long directoryId = null; //String directoryId
+
+            if (directoryList.iterator().hasNext()) {
+            	directoryRetreived = directoryList.iterator().next();
+            	directoryId = directoryRetreived.getDirectoryId();
+            	LOGGER.debug("Product with productId : {} updated by Backend Microservice", directoryId);
+
+				DirectoryRest directoryHateoas = convertEntityToHateoasEntity(directoryRetreived);
+				directoryHateoas.add(linkTo(methodOn(DirectoryRestController.class).getDirectory(directoryHateoas.getDirectoryId())).withSelfRel());
+            	deferredResult.setResult(new ResponseEntity<DirectoryRest>(directoryHateoas, HttpStatus.OK));
+
+            }
+            else {
+            	LOGGER.debug("Product with code : {} not updated by Backend Microservice", id);
+				deferredResult.setResult(new ResponseEntity<DirectoryRest>(HttpStatus.NOT_FOUND));
+            }
+
+
+        }).exceptionally(ex -> {
+        	LOGGER.error(ex.getMessage());
+        	return null;
+        });
+        LOGGER.info("Ending");
+        return deferredResult;
+    }
+
+
+    //------------------- Delete a Product --------------------------------------------------------
+
+    @RequestMapping(value = "/directoriesweb/{directoryId}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public DeferredResult<ResponseEntity<Directory>> deleteDirectory(@PathVariable("directoryId")Long id) { // String Id
+    	
+    	LOGGER.info("Start");
+    	LOGGER.debug("Deleting Product with id: {}", id);
+        
+		LOGGER.info("Thread : " + Thread.currentThread());
+		DeferredResult<ResponseEntity<Directory>> deferredResult = new DeferredResult<>();
+
+		Directories directoriesRequest = new Directories();
+		directoriesRequest.setOperation(OperationKafka.DELETE);//Directories.DELETE
+		List<Directory> directoryRequestList = new ArrayList<>();
+		Directory directoryToDelete = new Directory();
+		directoryToDelete.setDirectoryId(id);
+		directoryToDelete.setCreationDate(new Timestamp(System.currentTimeMillis()));
+		//directoryToDelete.setOrder(0L);
+		directoryToDelete.setOrder(null);
+		directoryToDelete.setSubDirId(null);
+		directoryToDelete.setTopicId(null);
+//		directoryToDelete.setName("");
+//		directoryToDelete.setCode("");
+//		directoryToDelete.setTitle("");
+//		directoryToDelete.setPrice(0D);
+		directoryRequestList.add(directoryToDelete);
+		directoriesRequest.setDirectories(directoryRequestList);
+        
+        CompletableFuture<Directories> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
+        
+        completableFuture.thenAccept(directories -> {
+
+            if (directories.getOperation().equals(OperationKafka.SUCCESS)) {//contentEquals
+            	LOGGER.debug("Product with productId : {} deleted by Backend Microservice", id);
+            	deferredResult.setResult(new ResponseEntity<Directory>(HttpStatus.NO_CONTENT));
+
+            }
+            else {
+            	LOGGER.debug("Product with id : {} suspected not deleted by Backend Microservice", id);
+            	deferredResult.setResult(new ResponseEntity<Directory>(HttpStatus.NOT_FOUND));
+            }
+           
+        }).exceptionally(ex -> {
+        	LOGGER.error(ex.getMessage());
+        	return null;
+        });
+        LOGGER.info("Ending");
+        return deferredResult;
+    }
+
+	private DirectoryRest convertEntityToHateoasEntity(Directory directory){
+		return  modelMapper.map(directory,  DirectoryRest.class);
+	}
+
+}

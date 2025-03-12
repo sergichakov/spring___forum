@@ -1,0 +1,282 @@
+/*
+ * Copyright (c) 2024/2025 Binildas A Christudas & Apress
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.forum.post.repo.kafka;
+
+import java.util.List;
+import java.util.ArrayList;
+
+import com.forum.post.kafka.event.Posts;
+import com.forum.post.kafka.event.Post;
+import com.forum.post.kafka.event.OperationKafka;
+import com.forum.post.repo.model.PostEntity;
+import com.forum.post.repo.repository.PostRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.stereotype.Component;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * @author <a href="mailto:biniljava<[@.]>yahoo.co.in">Binildas C. A.</a>
+ */
+/*@Component
+public class DirectoryListener{
+
+} */
+@Component
+public class DirectoryListener {
+	
+	@Autowired
+	private DirectoryRepository directoryRepository;
+
+    @Autowired
+    private DirectoryMapper mapper;
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(DirectoryListener.class);
+
+    @KafkaListener(topics = "${kafka.topic.product.request}", containerFactory = "requestReplyListenerContainerFactory")
+    @SendTo
+    public Directories listenConsumerRecord(ConsumerRecord<String, Directories> record){
+        
+        long secondsToSleep = 3;
+        
+        LOGGER.info("Start");
+
+        //print all headers
+        record.headers().forEach(header -> LOGGER.debug(header.key() + ":" + new String(header.value())));
+        
+        String key = record.key();
+        Directories posts = record.value();
+        LOGGER.debug("Listen; key : " + key);
+        LOGGER.debug("Listen; value : " + posts);
+        
+        Directories postsToReturn = resolveAndExecute(posts);
+
+        LOGGER.info("Ending");
+        return postsToReturn;
+        
+    }
+    
+    private Directories resolveAndExecute(Directories posts) {
+    	
+    	LOGGER.info("Start");
+    	Directories postsToReturn = null;
+
+    	if(posts.getOperation().equals(OperationKafka.RETREIVE_DETAILS)){
+    		postsToReturn = getDirectory(posts);
+    	}
+    	else if(posts.getOperation().equals(OperationKafka.RETREIVE_ALL)){
+    		postsToReturn = getAllDirectories(posts);
+    	}
+    	else if(posts.getOperation().equals(OperationKafka.CREATE)){
+    		postsToReturn = createDirectories(posts);
+    	}
+    	else if(posts.getOperation().equals(OperationKafka.UPDATE)){
+    		postsToReturn = updateDirectories(posts);
+    	}
+    	else if(posts.getOperation().equals(OperationKafka.DELETE)){
+    		postsToReturn = deleteDirectories(posts);
+    	}
+    	else {
+    		LOGGER.debug("Inside else. Undefined Operation!");
+    	}
+    	LOGGER.info("Ending");
+    	return postsToReturn;
+    }
+
+    //------------------- Retreive a Product --------------------------------------------------------
+    private Directories getDirectory(Directories posts) {
+
+    	LOGGER.info("Start");
+    	Directories postsToReturn = new Directories();
+    	if((null != posts) && (posts.getDirectories().iterator().hasNext())) {
+    		Long directoryId = ((Directory) posts.getDirectories().iterator().next()).getDirectoryId();
+    		LOGGER.debug("Fetching Product with directoryId : {}", directoryId);
+
+        	DirectoryThemeEntity postEntity = directoryRepository.findById((directoryId)).get(); //findById(Long.parseLong(directoryId)).get();
+
+    		postsToReturn.setOperation(OperationKafka.SUCCESS);
+            if (postEntity == null) {
+        		LOGGER.debug("Product with directoryId : {} not found in repository", directoryId);
+            }
+            else {
+            	LOGGER.debug("Product with directoryId : {} found in repository", directoryId);
+            	List<Directory> postListToReturn = new ArrayList<Directory>();
+            	postListToReturn.add(mapper.entityToApi(postEntity));
+            	postsToReturn.setDirectories(postListToReturn);
+            }
+    	}
+    	else {
+    		LOGGER.debug("Product cannot be fetched, since param is null or empty");
+    		postsToReturn.setOperation(OperationKafka.FAILURE);
+    	}
+    	LOGGER.info("Ending");
+        return postsToReturn;
+    }
+
+    //------------------- Create a Product --------------------------------------------------------
+    //
+	private Directories createDirectories(Directories posts) {
+
+    	LOGGER.info("Start");
+    	Directories postsToReturn = new Directories();
+    	List<Directory> postListToReturn = null;
+    	Directory postToCreate = null;
+    	List<DirectoryThemeEntity> directoriesFound = null;
+    	DirectoryThemeEntity directoryCreatedOR = null;
+    	
+    	if((null != posts) && (posts.getDirectories().iterator().hasNext())) {
+
+    		postToCreate = posts.getDirectories().iterator().next();
+    		LOGGER.debug("Attempting to create a new Product with code: {}", postToCreate.getName());
+    		
+			directoriesFound = directoryRepository.findByName(postToCreate.getName());
+            if (directoriesFound.size() > 0) {
+        		LOGGER.debug("A Product with code {} already exist", directoriesFound.iterator().next().getName());
+        		postsToReturn.setOperation(OperationKafka.FAILURE);
+            }
+            else {
+				directoryCreatedOR = directoryRepository.save(mapper.apiToEntity(postToCreate));
+            	LOGGER.debug("A Product with id {} created newly", directoryCreatedOR.getDirectoryId());
+            	postsToReturn.setOperation(OperationKafka.SUCCESS);
+            	postListToReturn = new ArrayList<Directory>();
+            	postListToReturn.add(mapper.entityToApi(directoryCreatedOR));
+            	postsToReturn.setDirectories(postListToReturn);
+            }
+    	}
+    	else {
+    		LOGGER.debug("Product cannot be created, since param is null or empty");
+    		postsToReturn.setOperation(OperationKafka.FAILURE);
+    	}
+    	LOGGER.info("Ending");
+        return postsToReturn;
+    }
+
+    //------------------- Update a Product --------------------------------------------------------
+    private Directories updateDirectories(Directories posts) {
+
+    	LOGGER.info("Start");
+    	Directories postsToReturn = new Directories();
+    	List<Directory> postListToReturn = null;
+    	Directory postToUpdate = null;
+    	DirectoryThemeEntity directoryFoundEntity = null;
+    	DirectoryThemeEntity directoryUpdatedEntity = null;
+    	
+    	if((null != posts) && (posts.getDirectories().iterator().hasNext())) {
+
+    		postToUpdate = posts.getDirectories().iterator().next();
+    		LOGGER.debug("Attempting to find a Product with id: {} to update", postToUpdate.getDirectoryId());
+    		
+    		directoryFoundEntity = directoryRepository.findById((postToUpdate.getDirectoryId())).get();//findById(Long.parseLong(postToUpdate.getDirectoryId())).get();
+            if (null != directoryFoundEntity) {
+        		LOGGER.debug("A Product with id {} exist, attempting to update", directoryFoundEntity.getDirectoryId());
+        		postsToReturn.setOperation(OperationKafka.SUCCESS);
+				directoryUpdatedEntity = directoryRepository.save(mapper.apiToEntity(postToUpdate));
+            	postListToReturn = new ArrayList<Directory>();
+            	postListToReturn.add(mapper.entityToApi(directoryUpdatedEntity));
+            	postsToReturn.setDirectories(postListToReturn);
+            }
+            else {
+            	LOGGER.debug("A Product with id {} doesn't exist", postToUpdate.getDirectoryId());
+            	postsToReturn.setOperation(OperationKafka.FAILURE);
+            }
+    	}
+    	else {
+    		LOGGER.debug("Product cannot be updated, since param is null or empty");
+    		postsToReturn.setOperation(OperationKafka.FAILURE);
+    	}
+    	LOGGER.info("Ending");
+        return postsToReturn;
+    }
+
+    //------------------- Delete a Product --------------------------------------------------------
+    private Directories deleteDirectories(Directories posts) {
+
+    	LOGGER.info("Start");
+    	Directories postsToReturn = new Directories();
+    	List<Directory> postListToReturn = null;
+    	Directory postToDelete = null;
+    	DirectoryThemeEntity directoryFoundEntity = null;
+    	
+    	if((null != posts) && (posts.getDirectories().iterator().hasNext())) {
+
+    		postToDelete = posts.getDirectories().iterator().next();
+    		LOGGER.debug("Attempting to find a Product with id: {} to delete", postToDelete.getDirectoryId());
+    		
+    		directoryFoundEntity = directoryRepository.findById((postToDelete.getDirectoryId())).get();
+            if (null != directoryFoundEntity) {
+        		LOGGER.debug("A Product with id {} exist, attempting to delete", directoryFoundEntity.getDirectoryId());
+        		directoryRepository.delete(mapper.apiToEntity(postToDelete));
+        		postsToReturn.setOperation(OperationKafka.SUCCESS);
+            	postListToReturn = new ArrayList<Directory>();
+            	postsToReturn.setDirectories(postListToReturn);
+            }
+            else {
+            	LOGGER.debug("A Product with id {} doesn't exist", postToDelete.getDirectoryId());
+            	postsToReturn.setOperation(OperationKafka.FAILURE);
+            }
+    	}
+    	else {
+    		LOGGER.debug("Product cannot be deleted, since param is null or empty");
+    		postsToReturn.setOperation(OperationKafka.FAILURE);
+    	}
+    	LOGGER.info("Ending");
+        return postsToReturn;
+    }
+
+    //------------------- Retreive all Products --------------------------------------------------------
+    private Directories getAllDirectories(Directories posts) {
+
+    	LOGGER.info("Start");
+    	Directories postsToReturn = new Directories();
+		Iterable<DirectoryThemeEntity> iterable = directoryRepository.findAll();
+
+        List<Directory> postListToReturn = new ArrayList<Directory> ();
+        for(DirectoryThemeEntity postEntity :iterable){
+            postListToReturn.add(mapper.entityToApi(postEntity));
+        }
+        if(postListToReturn.size() == 0){
+    		LOGGER.debug("No products retreived from repository");
+        }       
+        postListToReturn.forEach(item->LOGGER.debug(item.toString()));
+
+    	postsToReturn.setOperation(OperationKafka.SUCCESS);
+    	postsToReturn.setDirectories(postListToReturn);
+    	
+    	//delay();
+    	LOGGER.info("Ending");
+        return postsToReturn;
+    }
+
+    private void delay() {
+        
+        long secondsToSleep = 1;
+        LOGGER.info("Start");
+        LOGGER.debug(Thread.currentThread().toString());
+        LOGGER.debug("Starting to Sleep Seconds : " + secondsToSleep);
+
+        try{
+            Thread.sleep(1000 * secondsToSleep);
+        }
+        catch(Exception e) {
+            LOGGER.error("Error : " + e);
+        }
+        LOGGER.debug("Awakening from Sleep...");
+    }
+}
