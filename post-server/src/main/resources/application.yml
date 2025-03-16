@@ -1,0 +1,45 @@
+server:
+  application:
+    name: post-server
+  port: 8083
+spring:
+  datasource:
+    url: ${datasource.url} #jdbc:postgresql://localhost:5432/postsdb
+    username: ${datasource.username} #forum # ##${POSTGRES_USER}
+    password: ${datasource.password} #ForumPassword # ##${POSTGRES_PASSWORD}
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+  kafka:
+    bootstrap-servers: ${kafka.bootstrap-servers} #localhost:9092
+    consumer: 
+      auto-offset-reset: earliest
+      group-id: post-server
+  liquibase:
+    #change-log: classpath:/db/changelog/db.changelog-master.xml
+    changeLog: "classpath:db/changelog.sql"
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation: true
+        hbm2ddl:
+          auto: update # #create-drop
+        dialect: ${datasource.dialect}
+    show-sql: true
+
+kafka:
+  topic:
+    product:
+      request: post-req-topic
+      reply: post-req-reply-topic
+  request-reply:
+    timeout-ms: 10000
+product:
+  topic:
+    request:
+      numPartitions: 5
+logging:
+  level:
+    root: info # info
+

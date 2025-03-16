@@ -1,0 +1,48 @@
+server:
+  application:
+    name: topic-server
+  port: 8083
+spring:
+  datasource:
+    url: ${datasource1.url} #jdbc:postgresql://postgres-topic:5432/topicsdb #${datasource1.url} #jdbc:postgresql://localhost:5432/topicsdb
+    username: ${datasource1.username}
+    password: ${datasource1.password}
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+  kafka:
+    bootstrap-servers: localhost:9092 #${kafka1.bootstrap-servers} #localhost:9092
+    consumer: 
+      auto-offset-reset: earliest
+      group-id: topic-server
+  liquibase:
+    #change-log: classpath:/db/changelog/db.changelog-master.xml
+    changeLog: "classpath:db/changelog.sql"
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation: true
+#        hbm2ddl:
+#          auto: ${hibernate1.ddl-auto} # #create-drop
+#        dialect: ${hibernate1.dialect}
+    show-sql: true
+#    database-platform: ${hibernate1.dialect}
+
+#spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
+kafka:
+  topic:
+    product:
+      request: topic-req-topic
+      reply: topic-req-reply-topic
+  request-reply:
+    timeout-ms: 10000
+product:
+  topic:
+    request:
+      numPartitions: 1 # ##### numPartitions: 5
+logging:
+  level:
+    root: info # info
+

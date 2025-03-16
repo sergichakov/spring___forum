@@ -1,0 +1,13 @@
+#Topic Server
+
+datasource1:
+  url: jdbc:postgresql://postgres-topic:5432/topicsdb
+  # ##jdbc:postgresql://${DB_SERVER}/${POSTGRES_DB}
+  username: forum # ##${POSTGRES_USER}
+  password: ForumPassword # ##${POSTGRES_PASSWORD}
+hibernate1:
+  ddl-auto: create    # create
+  dialect: org.hibernate.dialect.PostgreSQLDialect
+kafka1:
+  bootstrap-servers: kafka:9092
+

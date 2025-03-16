@@ -1,0 +1,26 @@
+server:
+  application:
+    name: topic-web
+  port: 8071
+spring:
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+  kafka:
+    bootstrap-servers: ${kafka.bootstrap-servers} #localhost:9092
+    consumer:
+      auto-offset-reset: earliest
+      group-id: topic-web
+kafka:
+  topic:
+    product:
+      request: topic-req-topic
+      reply: topic-req-reply-topic
+  request-reply:
+    timeout-ms: 10000
+product:
+  topic:
+    request:
+      numPartitions: 5
+logging:
+  level:
+    root: info

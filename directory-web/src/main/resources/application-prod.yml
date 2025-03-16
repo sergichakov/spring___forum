@@ -1,0 +1,3 @@
+#Directory Web
+kafka:
+  bootstrap-servers: kafka:9092

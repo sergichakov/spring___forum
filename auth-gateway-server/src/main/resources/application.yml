@@ -5,6 +5,52 @@ spring:
   cloud:
     gateway:
       routes:
+        - id: rootofall
+          uri: http://127.0.0.1:8090
+          predicates:
+            - Path=/  # ##              - Path=/resource
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+        - id: resource
+          uri: http://127.0.0.1:8090
+          predicates:
+            - Path=/resource  # ##              - Path=/resource
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+        - id: swaggeruifull
+          uri: http://127.0.0.1:8090
+          predicates:
+            - Path=/swagger-ui/index.html  # ##              - Path=/resource
+        #          filters:
+        #            - TokenRelay=
+        #            - RemoveRequestHeader=Cookie
+        - id: swagger-ui
+          uri: http://127.0.0.1:8090
+          predicates:
+            - Path=/swagger-ui/**  # ##              - Path=/resource
+        #          filters:
+        #            - TokenRelay=
+        #            - RemoveRequestHeader=Cookie
+        - id: swagger-v3
+          uri: http://127.0.0.1:8090
+          predicates:
+            - Path=/v3/**
+        - id: oauth_token_others
+          uri: http://127.0.0.1:9000
+          predicates:
+            - Path=/oauth2/**
+        - id: oauth_token_others
+          uri: http://127.0.0.1:9000
+          predicates:
+            - Path=/userinfo
+        - id: oauth_gateway
+          uri: http://127.0.0.1:9000
+          predicates:
+            - Path=/login/oauth2/code/gateway
+
+
         - id: resource
           uri: http://127.0.0.1:8090
           predicates:
@@ -26,7 +72,7 @@ spring:
             scope: openid,resource.read
         provider:
           spring:
-            issuer-uri: http://localhost:9000
+            issuer-uri: http://localhost:9000 # ## was localhost:9000
 
 logging:
   level:

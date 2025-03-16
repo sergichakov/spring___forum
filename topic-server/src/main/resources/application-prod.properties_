@@ -1,0 +1,8 @@
+datasource.url=jdbc:postgresql://postgres:5432/topicsdb
+# ##jdbc:postgresql://${DB_SERVER}/${POSTGRES_DB}
+datasource.username=forum
+ # ##${POSTGRES_USER}
+datasource.password=ForumPassword
+ # ##${POSTGRES_PASSWORD}
+hibernate.ddl-auto=create
+kafka.bootstrap-servers=kafka:9092

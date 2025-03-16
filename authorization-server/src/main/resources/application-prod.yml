@@ -1,0 +1,8 @@
+# Authorization server
+datasource:
+  url: jdbc:postgresql://postgres:5432/users_repo # ##jdbc:postgresql://${DB_SERVER}/${POSTGRES_DB}
+  username: forum # ##${POSTGRES_USER}
+  password: ForumPassword # ##${POSTGRES_PASSWORD}
+hibernate:
+  ddl-auto: create    # create
+#show-sql: true

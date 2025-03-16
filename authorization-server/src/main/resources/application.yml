@@ -5,3 +5,26 @@ logging:
   level:
     #root: TRACE
     org.springframework.security: trace
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: ${hibernate.ddl-auto}    # create
+    show-sql: true
+  sql:
+    init:
+      mode: always    #  spring.datasource.initialization-mode: always
+
+  h2:
+    console:
+      enabled: true
+
+
+ #   console:
+      path: /h2-console
+      settings.trace: false
+      settings.web-allow-others: false
+  datasource:
+    url: ${datasource.url} #jdbc:postgresql://localhost:5432/users_repo
+    username: ${datasource.username} #forum
+    password: ${datasource.password} #ForumPassword
