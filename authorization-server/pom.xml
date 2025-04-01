@@ -22,7 +22,7 @@
     </properties>
 
     <dependencies>
-        <dependency>
+        <!--   --><dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
@@ -36,6 +36,144 @@
             <version>${spring-auth-server.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-resource-server</artifactId>
+        </dependency>
+
+<!--
+    SecurityFilterChain resourceServerSecurityFilterChain(
+            HttpSecurity http,
+            @Value("${resource-server.cors.allowed-origins:}#{T(java.util.Collections).emptyList()}") List<String> allowedOrigins)
+            throws Exception {
+        http.oauth2ResourceServer(oauth2 -> oauth2.jwt());
+        http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        http.csrf(csrf -> csrf.disable());
+        http.exceptionHandling(handeling -> handeling.authenticationEntryPoint((request, response, authException) -> {
+            response.addHeader(HttpHeaders.WWW_AUTHENTICATE, "Basic realm=\"Restricted Content\"");
+            response.sendError(HttpStatus.UNAUTHORIZED.value(), HttpStatus.UNAUTHORIZED.getReasonPhrase());
+        }));
+        http.authorizeHttpRequests().anyRequest().authenticated();
+        http.cors(cors -> {
+            if (allowedOrigins.isEmpty()) {
+                cors.disable();
+            } else {
+                cors.configurationSource(corsConfig(allowedOrigins));
+            }
+        });
+        return http.build();
+    }
+
+    CorsConfigurationSource corsConfig(List<String> allowedOrigins) {
+        final var source = new UrlBasedCorsConfigurationSource();
+
+        final var configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(allowedOrigins);
+        configuration.setAllowedMethods(List.of("*"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of("*"));
+
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+
+
+security:
+    oauth2:
+      resource-server:
+        jwt:
+          issuer-uri: http://keycloak-url/realms/realm-id
+          jwk-set-uri: http://keycloak-url/realms/realm-id/protocol/openid-connect/certs
+      client:
+        registration:
+          client-ui:
+            provider: keycloak
+            client-id: client-ui
+            client-secret: abcdefgh
+            authorization-grant-type: authorization_code
+            scope: openid
+        provider:
+          client-ui:
+            authorization-uri: http://keycloak-url/realms/realm-id/protocol/openid-connect/auth
+            token-uri: http://keycloak-url/realms/realm-id/protocol/openid-connect/token
+            user-info-uri: http://keycloak-url/realms/realm-id/protocol/openid-connect/userinfo
+            jwk-set-uri: http://keycloak-url/realms/realm-id/protocol/openid-connect/certs
+            user-name-attribute: preferred_username
+
+oauth2resourceServer (REST API)
+
+  @Bean
+    SecurityFilterChain resourceServerSecurityFilterChain(
+            HttpSecurity http,
+            @Value("${resource-server.cors.allowed-origins:}#{T(java.util.Collections).emptyList()}") List<String> allowedOrigins)
+            throws Exception {
+        http.oauth2ResourceServer(oauth2 -> oauth2.jwt());
+        http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        http.csrf(csrf -> csrf.disable());
+        http.exceptionHandling(handeling -> handeling.authenticationEntryPoint((request, response, authException) -> {
+            response.addHeader(HttpHeaders.WWW_AUTHENTICATE, "Basic realm=\"Restricted Content\"");
+            response.sendError(HttpStatus.UNAUTHORIZED.value(), HttpStatus.UNAUTHORIZED.getReasonPhrase());
+        }));
+        http.authorizeHttpRequests().anyRequest().authenticated();
+        http.cors(cors -> {
+            if (allowedOrigins.isEmpty()) {
+                cors.disable();
+            } else {
+                cors.configurationSource(corsConfig(allowedOrigins));
+            }
+        });
+        return http.build();
+    }
+
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak-url/realms/realm-id
+
+resource-server:
+  cors:
+    allowed-origins:
+    - http://localhost:4200
+
+
+oauth2Login
+
+spring:
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak-realm-id:
+            issuer-uri: http://keycloak-url/realms/realm-id
+        registration:
+          keycloak-confidential-user:
+            authorization-grant-type: authorization_code
+            client-name: a local Keycloak instance
+            client-id: client-ui
+            client-secret: ${keycloak-secret}
+            provider: keycloak-realm-id
+            scope: openid,profile,email,offline_access
+
+    @Bean
+    SecurityFilterChain clientSecurityFilterChain(HttpSecurity http, ClientRegistrationRepository clientRegistrationRepository) throws Exception {
+        http.oauth2Login();
+        final var logoutSuccessHandler = new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
+        logoutSuccessHandler.setPostLogoutRedirectUri("{baseUrl}");
+        http.logout(logout -> logout.logoutSuccessHandler(logoutSuccessHandler));
+        http.cors().disable();
+        // sessions are required (enabled by default)
+        // CSRF protection is required (enabled by default) because security is based on sessions
+        http.authorizeHttpRequests().requestMatchers("/login/**", "/oauth2/**").permitAll() // this is required for unauthenticated users to login
+                .anyRequest().authenticated();
+        return http.build();
+    }
+
+
+-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -70,6 +208,30 @@
         <groupId>org.hibernate</groupId>
         <artifactId>hibernate-core</artifactId>
             <!--   <version>6.5.3.Final</version>  before it was empty version -->
+        </dependency>
+        <!--     <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>0.12.6</version>
+               <scope>compile</scope>
+        </dependency>-->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.12.6</version>
+            <!--	 -->	<scope>compile</scope>
+        </dependency> <!--  -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.12.6</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.12.6</version>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
     <profiles>

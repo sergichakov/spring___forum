@@ -1,24 +1,11 @@
-/*
- * Copyright (c) 2024/2025 Binildas A Christudas & Apress
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.forum.post.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.forum.jwk.fetch.JwtKeyComponent;
+import com.forum.jwk.service.JwtService;
 import com.forum.post.kafka.event.Post;
 import com.forum.post.kafka.event.Posts;
 
@@ -50,9 +37,7 @@ import java.util.Base64;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
-/**
- * @author <a href="mailto:biniljava<[@.]>yahoo.co.in">Binildas C. A.</a>
- */
+
 //@CrossOrigin
 
 //@RestController
@@ -143,20 +128,24 @@ public class PostRestController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(PostRestController.class);
 
-	  @Autowired
-	  private CompletableFutureReplyingKafkaOperations<String, Posts, Posts> replyingKafkaTemplate;
+	@Autowired
+	private CompletableFutureReplyingKafkaOperations<String, Posts, Posts> replyingKafkaTemplate;
 
-	  @Autowired
-	  private ModelMapper modelMapper;
+	@Autowired
+	private ModelMapper modelMapper;
 
-	  @Autowired
-	  private PostWebService postWebService;
+	@Autowired
+	private PostWebService postWebService;
 
-	  @Value("${kafka.topic.product.request}")
-	  private String requestTopic;
+	@Value("${kafka.topic.product.request}")
+	private String requestTopic;
 	  
-	  @Value("${kafka.topic.product.reply}")
-	  private String requestReplyTopic;
+	@Value("${kafka.topic.product.reply}")
+    private String requestReplyTopic;
+    @Autowired
+    private JwtService jwtService;
+    @Autowired
+    private JwtKeyComponent jwtKeyComponent;
 	
 	//------------------- Retreive all Products --------------------------------------------------------
     @RequestMapping(value = "/postsweb", method = RequestMethod.GET ,produces = {MediaType.APPLICATION_JSON_VALUE})
@@ -388,7 +377,8 @@ public class PostRestController {
     //------------------- Delete a Product --------------------------------------------------------
 
     @RequestMapping(value = "/postsweb/{postId}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public DeferredResult<ResponseEntity<Post>> deletePost(@PathVariable("postId")UUID id, @RequestHeader (name="Authorization") String token) { // String Id
+    public DeferredResult<ResponseEntity<Post>> deletePost(@PathVariable("postId")UUID id,
+                                                           @RequestHeader (name="Authorization") String token) { // String Id
     	
     	LOGGER.info("Start");
     	LOGGER.debug("Deleting Product with id: {}", id);
@@ -443,13 +433,44 @@ public class PostRestController {
 		return  modelMapper.map(post,  PostRest.class);
 	}
 
+//    private String getHeaderUserId(String token, String headerName){
+//        if(null==token || token.isEmpty()){
+//            return null;
+//        }
+//        String[] chunks = token.split("\\.");
+//        Base64.Decoder decoder = Base64.getUrlDecoder();
+//        String payloadJson = new String(decoder.decode(chunks[1]));
+//        ObjectMapper mapper = new ObjectMapper();
+//        JsonNode jsonNode = null;
+//        try {
+//            jsonNode = mapper.readTree(payloadJson);
+//        }catch(JsonMappingException e){
+//
+//            LOGGER.debug("JsonMappingException has been thrown. Trouble in JWT payload");
+//            e.printStackTrace();
+//        }catch(JsonProcessingException e){
+//            LOGGER.debug("JsonProcessingException has been thrown. Trouble in JWT payload");
+//            e.printStackTrace();
+//        }
+////        Long headerUserId = Long.parseLong(jsonNode.get("userId").asText());
+//        String header = jsonNode.get(headerName).asText();
+////        UserDetailsRole userDetailsRole=UserDetailsRole.valueOf("role");
+//        LOGGER.debug("now i know userId {}", header);
+//        if (null==header || header.isEmpty()){
+//            LOGGER.debug("headerUserId is empty");
+//            return null;
+//        }
+//        return header;
+//    }
     private String getHeaderUserId(String token, String headerName){
-        if(null==token || token.isEmpty()){
+
+        String jwtToken = token.split("Bearer ")[1];
+        if(null==token || token.isEmpty() || !jwtService.isTokenValid(jwtToken)){
             return null;
         }
-        String[] chunks = token.split("\\.");
+        String[] tokenChunks = token.split("\\.");
         Base64.Decoder decoder = Base64.getUrlDecoder();
-        String payloadJson = new String(decoder.decode(chunks[1]));
+        String payloadJson = new String(decoder.decode(tokenChunks[1]));
         ObjectMapper mapper = new ObjectMapper();
         JsonNode jsonNode = null;
         try {

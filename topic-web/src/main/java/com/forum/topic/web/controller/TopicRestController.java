@@ -1,18 +1,4 @@
-/*
- * Copyright (c) 2024/2025 Binildas A Christudas & Apress
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
 package com.forum.topic.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -24,10 +10,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 //import org.springframework.security.core.context.SecurityContextHolder;
 //import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails;
+import com.forum.jwk.fetch.JwtKeyComponent;
+import com.forum.jwk.service.JwtService;
 import com.forum.topic.kafka.event.Topic;
+import com.forum.topic.kafka.event.Topics;
 import com.forum.topic.kafka.event.UserDetailsRole;
 import com.forum.topic.web.hateoas.model.TopicRest;
 import com.forum.topic.web.model.TopicWebDto;
+import com.forum.topic.web.service.TopicWebService;
+import io.jsonwebtoken.security.SignatureException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.http.MediaType;
@@ -38,7 +29,6 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import org.springframework.hateoas.CollectionModel;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -46,12 +36,9 @@ import org.slf4j.LoggerFactory;
 import com.forum.kafka.request_reply_util.CompletableFutureReplyingKafkaOperations;
 
 import java.util.Base64;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-/**
- * @author <a href="mailto:biniljava<[@.]>yahoo.co.in">Binildas C. A.</a>
- */
+
 //@CrossOrigin
 
 //@RestController
@@ -142,30 +129,35 @@ public class TopicRestController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(TopicRestController.class);
 
-	  @Autowired
-	  private CompletableFutureReplyingKafkaOperations<String, com.forum.topic.kafka.event.Topics, com.forum.topic.kafka.event.Topics> replyingKafkaTemplate;
+    @Autowired
+    private CompletableFutureReplyingKafkaOperations<String, Topics, Topics> replyingKafkaTemplate;
 
-	  @Autowired
-	  private ModelMapper modelMapper;
+    @Autowired
+    private ModelMapper modelMapper;
 
-	  @Autowired
-	  private com.forum.topic.web.service.TopicWebService topicWebService;
+    @Autowired
+    private TopicWebService topicWebService;
 
-	  @Value("${kafka.topic.product.request}")
-	  private String requestTopic;
-	  
-	  @Value("${kafka.topic.product.reply}")
-	  private String requestReplyTopic;
+    @Autowired
+    private JwtService jwtService;
+    @Autowired
+    private JwtKeyComponent jwtKeyComponent;
 	
-	//------------------- Retreive all Products --------------------------------------------------------
-    @RequestMapping(value = "/topicsweb", method = RequestMethod.GET ,produces = {MediaType.APPLICATION_JSON_VALUE})
+    @RequestMapping(value = "/topicsweb", method = RequestMethod.GET ,
+            produces = {MediaType.APPLICATION_JSON_VALUE})
 	public DeferredResult<ResponseEntity<CollectionModel<TopicRest>>>
     getAllPosts(@RequestParam(required = false) Integer page,
                 @RequestParam(required = false) Integer numberPerPage,
-                @RequestHeader (name="Authorization") String token){
+                @RequestHeader (name="Authorization",required = false) String token){//// add bearer Authorization "Bearer abcd1234"
 
     	LOGGER.info("Start topicWeb");
-        Long headerUserId= Long.parseLong(getHeaderUserId(token,"userId"));
+        String userId=getHeaderUserId(token,"userId");
+        if (null==userId) {
+            LOGGER.info("JWT token Id is null");
+            throw new org.springframework.security.access.AccessDeniedException("Should have Authorization Bearer header");
+        }
+
+        Long headerUserId= Long.parseLong(userId);
         UserDetailsRole headerUserRole= UserDetailsRole.valueOf(getHeaderUserId(token,"role"));
         if (headerUserId==null || headerUserId==null){
             LOGGER.info("headerUserId or UserDetailsRole is null");
@@ -228,8 +220,11 @@ public class TopicRestController {
     }
 
   //------------------- Retreive a Product --------------------------------------------------------
-    @RequestMapping(value = "/topicsweb/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public DeferredResult<ResponseEntity<TopicRest>> getTopic(@PathVariable("id") Long id, @RequestHeader (name="Authorization") String token) {//String id
+    @RequestMapping(value = "/topicsweb/{id}", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public DeferredResult<ResponseEntity<TopicRest>> getTopic(
+            @PathVariable("id") Long id,
+            @RequestHeader (name="Authorization", required = false) String token) {//String id
     	
     	LOGGER.info("Start");
     	LOGGER.debug("Fetching Product with id: {}", id);
@@ -239,7 +234,8 @@ public class TopicRestController {
         UserDetailsRole headerUserRole= UserDetailsRole.valueOf(getHeaderUserId(token,"role"));
         //Long headerUserId=headers.keySet().iterator().next();
 //        serDetailsRole userDetailsRole = headers.get(headerUserId);
-		DeferredResult<ResponseEntity<TopicRest>> deferredResult = topicWebService.getTopic(id, headerUserId, headerUserRole);
+		DeferredResult<ResponseEntity<TopicRest>> deferredResult
+                = topicWebService.getTopic(id, headerUserId, headerUserRole);
 
 /*		Directories directoriesRequest = new Directories();
 		directoriesRequest.setOperation(OperationKafka.RETREIVE_DETAILS);//Directories.RETREIVE_DETAILS
@@ -281,39 +277,13 @@ public class TopicRestController {
         LOGGER.info("Ending");
         return deferredResult;
     }
-    private String getHeaderUserId(String token, String headerName){
-        if(null==token || token.isEmpty()){
-            return null;
-        }
-        String[] chunks = token.split("\\.");
-        Base64.Decoder decoder = Base64.getUrlDecoder();
-        String payloadJson = new String(decoder.decode(chunks[1]));
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode jsonNode = null;
-        try {
-            jsonNode = mapper.readTree(payloadJson);
-        }catch(JsonMappingException e){
 
-            LOGGER.debug("JsonMappingException has been thrown. Trouble in JWT payload");
-            e.printStackTrace();
-        }catch(JsonProcessingException e){
-            LOGGER.debug("JsonProcessingException has been thrown. Trouble in JWT payload");
-            e.printStackTrace();
-        }
-//        Long headerUserId = Long.parseLong(jsonNode.get("userId").asText());
-        String header = jsonNode.get(headerName).asText();
-//        UserDetailsRole userDetailsRole=UserDetailsRole.valueOf("role");
-        LOGGER.debug("now i know userId {}", header);
-        if (null==header || header.isEmpty()){
-            LOGGER.debug("headerUserId is empty");
-            return null;
-        }
-        return header;
-    }
 
     //------------------- Create a Product --------------------------------------------------------
-    @RequestMapping(value = "/topicsweb", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public DeferredResult<ResponseEntity<TopicRest>> addPost(@RequestBody TopicWebDto postRest) throws ExecutionException, InterruptedException {//Directory directory
+    @RequestMapping(value = "/topicsweb", method = RequestMethod.POST,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public DeferredResult<ResponseEntity<TopicRest>> addPost(@RequestBody TopicWebDto postRest)
+            throws ExecutionException, InterruptedException {//Directory directory
     	
     	LOGGER.info("Start");
     	LOGGER.debug("Creating Product with code: {}");//, directory.getCode());
@@ -365,9 +335,11 @@ public class TopicRestController {
 
 
     //------------------- Update a Product --------------------------------------------------------
-    @RequestMapping(value = "/topicsweb/{postId}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/topicsweb/{postId}", method = RequestMethod.PUT,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     public DeferredResult<ResponseEntity<TopicRest>>
-			updateDirectory(@PathVariable("postId")Long id, @RequestBody TopicWebDto post, @RequestHeader (name="Authorization") String token) {
+			updateDirectory(@PathVariable("postId")Long id, @RequestBody TopicWebDto post,
+                            @RequestHeader (name="Authorization",required = false) String token) {
     	
     	LOGGER.info("Start");
     	LOGGER.debug("Updating Product with id: {}", id);
@@ -384,7 +356,8 @@ public class TopicRestController {
 
         LOGGER.info("token2 = ", token2);
 
-		DeferredResult<ResponseEntity<TopicRest>> deferredResult = topicWebService.updatePost(id, post, headerUserId, headerUserRole);
+		DeferredResult<ResponseEntity<TopicRest>> deferredResult = topicWebService.updatePost(id,
+                post, headerUserId, headerUserRole);
 /*
 		Directories directoriesRequest = new Directories();
 		directoriesRequest.setOperation(OperationKafka.UPDATE);//Directories.UPDATE
@@ -428,8 +401,11 @@ public class TopicRestController {
 
     //------------------- Delete a Product --------------------------------------------------------
 
-    @RequestMapping(value = "/topicsweb/{postId}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public DeferredResult<ResponseEntity<Topic>> deletePost(@PathVariable("postId")Long id, @RequestHeader (name="Authorization") String token) { // String Id
+    @RequestMapping(value = "/topicsweb/{postId}", method = RequestMethod.DELETE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public DeferredResult<ResponseEntity<Topic>> deletePost(
+            @PathVariable("postId")Long id,
+            @RequestHeader (name="Authorization",required = false) String token) { // String Id
     	
     	LOGGER.info("Start");
     	LOGGER.debug("Deleting Product with id: {}", id);
@@ -482,5 +458,55 @@ public class TopicRestController {
 	private TopicRest convertEntityToHateoasEntity(Topic topic){
 		return  modelMapper.map(topic,  TopicRest.class);
 	}
+    private String getHeaderUserId(String token, String headerName){
 
+        String jwtToken = token.split("Bearer ")[1];
+//        Object wasReturnedAnything= (Object)(jwtService.extractAllClaims(token));
+//        try {
+//            //if (null==jwtService.extractAllClaims(jwtToken)){
+//            jwtService.extractAllClaims(jwtToken);
+//        }catch(SignatureException esignature){
+//
+//            jwtKeyComponent.fetch(); // it is useful
+//            LOGGER.debug("get HeaderUser need to be propagate to other - Posts");
+//            try {
+//                System.out.println("Oper getHeaderUserId= jwks "+jwtKeyComponent.get());
+//// it all just to new JWK key
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//                throw new RuntimeException(e);
+//            } catch (ExecutionException e) {
+//                e.printStackTrace();
+//                throw new RuntimeException(e);
+//            }///////////////maybe this try-catch is useless
+//
+//        }
+        if(null==token || token.isEmpty() || !jwtService.isTokenValid(jwtToken)){
+            return null;
+        }
+        String[] tokenChunks = token.split("\\.");
+        Base64.Decoder decoder = Base64.getUrlDecoder();
+        String payloadJson = new String(decoder.decode(tokenChunks[1]));
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode jsonNode = null;
+        try {
+            jsonNode = mapper.readTree(payloadJson);
+        }catch(JsonMappingException e){
+
+            LOGGER.debug("JsonMappingException has been thrown. Trouble in JWT payload");
+            e.printStackTrace();
+        }catch(JsonProcessingException e){
+            LOGGER.debug("JsonProcessingException has been thrown. Trouble in JWT payload");
+            e.printStackTrace();
+        }
+//        Long headerUserId = Long.parseLong(jsonNode.get("userId").asText());
+        String header = jsonNode.get(headerName).asText();
+//        UserDetailsRole userDetailsRole=UserDetailsRole.valueOf("role");
+        LOGGER.debug("now i know userId {}", header);
+        if (null==header || header.isEmpty()){
+            LOGGER.debug("headerUserId is empty");
+            return null;
+        }
+        return header;
+    }
 }

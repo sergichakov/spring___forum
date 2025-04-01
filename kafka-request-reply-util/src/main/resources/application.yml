@@ -1,0 +1,2 @@
+auth-server:
+  get-jwk-link: "${jwt-key.link}"

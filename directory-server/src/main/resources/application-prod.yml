@@ -3,8 +3,10 @@ datasource:
   url: jdbc:postgresql://postgres-directory:5432/directoriesdb # ##jdbc:postgresql://${DB_SERVER}/${POSTGRES_DB}
   username: forum # ##${POSTGRES_USER}
   password: ForumPassword # ##${POSTGRES_PASSWORD}
+  dialect: org.hibernate.dialect.PostgreSQLDialect
 hibernate:
-  ddl-auto: create    # create
+  ddl-auto: update    # create
+
 
 kafka:
-  bootstrap-servers: kafka:9092
+  bootstrap-servers: kafka-0:9092,kafka-1:9092,kafka-2:9092

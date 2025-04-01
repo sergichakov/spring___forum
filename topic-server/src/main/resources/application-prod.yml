@@ -9,5 +9,5 @@ hibernate1:
   ddl-auto: create    # create
   dialect: org.hibernate.dialect.PostgreSQLDialect
 kafka1:
-  bootstrap-servers: kafka:9092
+  bootstrap-servers: kafka-0:9092,kafka-1:9092,kafka-2:9092 #localhost:29092 #kafka-0:9091 #localhost:29092,kafka-0:9091 #,kafka-1:9092,kafka-2:9092
 

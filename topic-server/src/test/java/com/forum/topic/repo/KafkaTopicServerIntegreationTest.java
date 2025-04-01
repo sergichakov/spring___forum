@@ -40,8 +40,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class KafkaTopicServerIntegreationTest {
   @Container
   static PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:13.3")
-          .withUsername("jira")
-          .withPassword("JiraRush")
+          .withUsername("forum")
+          .withPassword("ForumPassword")
           .withReuse(true)
           .withDatabaseName("topicsdb");
   @Autowired

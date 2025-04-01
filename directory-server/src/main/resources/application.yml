@@ -1,7 +1,7 @@
 server:
   application:
     name: product-server
-  port: 8083
+#  port: 8083
 spring:
   datasource:
     url: ${datasource.url} #jdbc:postgresql://localhost:5432/directoriesdb # ##jdbc:postgresql://${DB_SERVER}/${POSTGRES_DB}
@@ -9,6 +9,8 @@ spring:
     password: ${datasource.password} #ForumPassword # ##${POSTGRES_PASSWORD}
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+  main: ## need to disable tomcat port 8080
+    web-application-type: none
   kafka:
     bootstrap-servers: ${kafka.bootstrap-servers} #localhost:9092
     consumer: 
@@ -23,6 +25,9 @@ spring:
         jdbc:
           lob:
             non_contextual_creation: true
+        hbm2ddl:
+          auto: ${hibernate.ddl-auto} # #create-drop
+        dialect: ${datasource.dialect}
     show-sql: true
 
 kafka:
@@ -35,7 +40,7 @@ kafka:
 product:
   topic:
     request:
-      numPartitions: 5
+      numPartitions: 2
 logging:
   level:
     root: info

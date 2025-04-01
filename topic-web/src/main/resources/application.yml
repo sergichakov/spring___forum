@@ -1,7 +1,7 @@
 server:
   application:
     name: topic-web
-  port: 8071
+  port: 18071
 spring:
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
@@ -24,3 +24,14 @@ product:
 logging:
   level:
     root: info
+springdoc:
+  api-docs:
+    path: /topicsweb/v3/api-docs #/topicsweb/swagger-ui/v3/api-docs
+  swagger-ui:
+    path: /topicsweb/
+    url: /topicsweb/v3/api-docs #/topicsweb/swagger-ui/v3/api-docs
+
+app:
+  host-url: /
+auth-server:
+  get-jwk-link: "${jwt-key.link}"

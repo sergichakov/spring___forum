@@ -1,7 +1,7 @@
 server:
   application:
     name: post-server
-  port: 8083
+#  port: 8083
 spring:
   datasource:
     url: ${datasource.url} #jdbc:postgresql://localhost:5432/postsdb
@@ -9,6 +9,8 @@ spring:
     password: ${datasource.password} #ForumPassword # ##${POSTGRES_PASSWORD}
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+  main: ## need to disable tomcat port 8080
+    web-application-type: none
   kafka:
     bootstrap-servers: ${kafka.bootstrap-servers} #localhost:9092
     consumer: 
@@ -24,7 +26,7 @@ spring:
           lob:
             non_contextual_creation: true
         hbm2ddl:
-          auto: update # #create-drop
+          auto: ${hibernate.ddl-auto} # #create-drop
         dialect: ${datasource.dialect}
     show-sql: true
 

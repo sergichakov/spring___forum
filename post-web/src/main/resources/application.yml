@@ -1,7 +1,7 @@
 server:
   application:
     name: post-web
-  port: 8071
+  port: 18091
 spring:
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
@@ -24,3 +24,14 @@ product:
 logging:
   level:
     root: info
+springdoc:
+  api-docs:
+    path: /postsweb/v3/api-docs
+  swagger-ui:
+    path: /postsweb/
+    url: /postsweb/v3/api-docs
+
+app:
+  host-url: /
+auth-server:
+  get-jwk-link: "${jwt-key.link}"

@@ -1,0 +1,5 @@
+#Topic Web Dev
+kafka:
+  bootstrap-servers: localhost:9092
+jwt-key:
+  link: "http://localhost:9000/jwks"

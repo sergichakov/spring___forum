@@ -1,7 +1,7 @@
 server:
   application:
     name: topic-server
-  port: 8083
+#  port: 8083
 spring:
   datasource:
     url: ${datasource1.url} #jdbc:postgresql://postgres-topic:5432/topicsdb #${datasource1.url} #jdbc:postgresql://localhost:5432/topicsdb
@@ -10,13 +10,15 @@ spring:
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
   kafka:
-    bootstrap-servers: localhost:9092 #${kafka1.bootstrap-servers} #localhost:9092
+    bootstrap-servers: ${kafka1.bootstrap-servers} #localhost:9092
     consumer: 
       auto-offset-reset: earliest
       group-id: topic-server
   liquibase:
     #change-log: classpath:/db/changelog/db.changelog-master.xml
     changeLog: "classpath:db/changelog.sql"
+  main: ## need to disable tomcat port 8080
+    web-application-type: none
   jpa:
     properties:
       hibernate:
@@ -30,6 +32,7 @@ spring:
 #    database-platform: ${hibernate1.dialect}
 
 #spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
 
 kafka:
   topic:
@@ -45,4 +48,3 @@ product:
 logging:
   level:
     root: info # info
-

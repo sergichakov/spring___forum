@@ -58,8 +58,8 @@
 
 spring:
   datasource:
-    username: jira #${CONTAINER.USERNAME}
-    password: JiraRush #${CONTAINER.PASSWORD}
+    username: forum #${CONTAINER.USERNAME}
+    password: ForumPassword #${CONTAINER.PASSWORD}
     url: jdbc:postgresql://localhost:5433/topicsdb #${CONTAINER.URL}
     driver-class-name: org.postgresql.Driver
     driverClassName: org.postgresql.Driver

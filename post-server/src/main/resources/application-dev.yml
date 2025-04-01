@@ -1,0 +1,10 @@
+#Post Server DEV
+datasource:
+  url: jdbc:postgresql://localhost:5432/postsdb # ##jdbc:postgresql://${DB_SERVER}/${POSTGRES_DB}
+  username: forum # ##${POSTGRES_USER}
+  password: ForumPassword # ##${POSTGRES_PASSWORD}
+  dialect: org.hibernate.dialect.PostgreSQLDialect
+hibernate:
+  ddl-auto: update    # create
+kafka:
+  bootstrap-servers: localhost:9092

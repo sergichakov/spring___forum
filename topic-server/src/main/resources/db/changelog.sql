@@ -18,20 +18,20 @@
 DROP TABLE IF EXISTS topics;
 create table topics
 (
-    post_id       bigint , --not null
-        --primary key,
     change_date   timestamp(6),
     creation_date timestamp(6),
     directory_id  bigint,
+    post_id       bigint not null
+        primary key,
+    user_owner_id bigint,
     post_content  varchar(255),
-    topic_id      varchar(255),
-    user_owner_id bigint
+    topic_id      varchar(255)
 );
 alter table topics
     owner to forum;
-insert into topics ( number_of_likes, post_id, post_content, topic_id,user_creator_id,user_owner_id)
-values --(11, 'b78da23b-eedb-464f-b29d-e827f2a21445', 'Root dir',1,1,1),
-       (22, '1', 'Sub_dir dir',2,2,2);
+insert into topics (  post_id, post_content, topic_id,user_owner_id,directory_id)
+values (1, 'user Root dir',      'dc21cf9f-e003-46d7-b33c-59f411453c3f', 1, 101),
+       (2, 'admin post content', 'b78da23b-eedb-464f-b29d-e827f2a21445', 2, 202);
 
 
 

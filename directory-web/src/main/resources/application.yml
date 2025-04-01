@@ -24,3 +24,11 @@ product:
 logging:
   level:
     root: info
+springdoc:
+  api-docs:
+    path: /directoriesweb/v3/api-docs
+  swagger-ui:
+    path: /directoriesweb/
+    url: /directoriesweb/v3/api-docs
+app:
+  host-url: /

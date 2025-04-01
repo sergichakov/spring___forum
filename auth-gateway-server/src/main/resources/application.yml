@@ -5,60 +5,54 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: rootofall
-          uri: http://127.0.0.1:8090
+#        - id: rootofall
+#          uri: http://127.0.0.1:8090
+#          predicates:
+#            - Path=/  # ##              - Path=/resource
+#          filters:
+#            - TokenRelay=
+#            - RemoveRequestHeader=Cookie
+        - id: authorization-server-login
+          uri: http://authorization-server:9000
           predicates:
-            - Path=/  # ##              - Path=/resource
+            - Path=/login/**  # ##              - Path=/resource
+           # - Path=/oauth2/**
           filters:
             - TokenRelay=
             - RemoveRequestHeader=Cookie
-        - id: resource
-          uri: http://127.0.0.1:8090
+        - id: authorization-server
+          uri: http://authorization-server:9000
           predicates:
-            - Path=/resource  # ##              - Path=/resource
+            #- Path=/login/**  # ##              - Path=/resource
+            - Path=/oauth2/**
           filters:
             - TokenRelay=
             - RemoveRequestHeader=Cookie
-        - id: swaggeruifull
-          uri: http://127.0.0.1:8090
+        - id: swaggeruifull_api
+          uri: http://resource-service:8090
           predicates:
-            - Path=/swagger-ui/index.html  # ##              - Path=/resource
-        #          filters:
-        #            - TokenRelay=
-        #            - RemoveRequestHeader=Cookie
-        - id: swagger-ui
-          uri: http://127.0.0.1:8090
+              - Path=/v3/**  # ##              - Path=/resource
+        - id: swaggeruifull_ui
+          uri: http://resource-service:8090
           predicates:
             - Path=/swagger-ui/**  # ##              - Path=/resource
+#            - Path=/v3/**
         #          filters:
         #            - TokenRelay=
         #            - RemoveRequestHeader=Cookie
-        - id: swagger-v3
-          uri: http://127.0.0.1:8090
-          predicates:
-            - Path=/v3/**
-        - id: oauth_token_others
-          uri: http://127.0.0.1:9000
-          predicates:
-            - Path=/oauth2/**
-        - id: oauth_token_others
-          uri: http://127.0.0.1:9000
-          predicates:
-            - Path=/userinfo
-        - id: oauth_gateway
-          uri: http://127.0.0.1:9000
-          predicates:
-            - Path=/login/oauth2/code/gateway
 
-
-        - id: resource
-          uri: http://127.0.0.1:8090
+        - id: topic-web
+          uri: http://topic-web:18071
           predicates:
-            - Path=/resource
-          filters:
-            - TokenRelay=
-            - RemoveRequestHeader=Cookie
-
+            - Path=/topicsweb/**
+        - id: directory-web
+          uri: http://directory-web:18081
+          predicates:
+            - Path=/directoriesweb/**
+        - id: post-web
+          uri: http://post-web:18091
+          predicates:
+            - Path=/postsweb/**
   security:
     oauth2:
       client:
@@ -72,8 +66,13 @@ spring:
             scope: openid,resource.read
         provider:
           spring:
-            issuer-uri: http://localhost:9000 # ## was localhost:9000
-
+            issuer-uri: ${provider.issuer-uri} # ## was localhost:9000
+#springdoc:
+#  swagger-ui:
+#    enabled: true
+#    urls:
+#      - name: Order Service
+#        url: /topicsweb/v3/api-docs #http://localhost:18071/topicsweb/v3/api-docs
 logging:
   level:
     #root: TRACE

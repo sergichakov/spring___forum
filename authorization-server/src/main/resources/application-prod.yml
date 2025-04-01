@@ -1,8 +1,13 @@
 # Authorization server
-datasource:
-  url: jdbc:postgresql://postgres:5432/users_repo # ##jdbc:postgresql://${DB_SERVER}/${POSTGRES_DB}
+application.localhost-path: authorization-server
+datasource1:
+  url: jdbc:postgresql://postgres-users_repo:5432/users_repo # ##jdbc:postgresql://${DB_SERVER}/${POSTGRES_DB}
   username: forum # ##${POSTGRES_USER}
   password: ForumPassword # ##${POSTGRES_PASSWORD}
-hibernate:
-  ddl-auto: create    # create
-#show-sql: true
+hibernate1:
+  ddl-auto: update    # create
+
+auth-provider:
+  issuer-uri: http://${application.localhost-path}:9000
+auth-server:
+  get-jwk-link: http://${application.localhost-path}:9000/jwks

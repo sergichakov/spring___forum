@@ -9,7 +9,7 @@ logging:
 spring:
   jpa:
     hibernate:
-      ddl-auto: ${hibernate.ddl-auto}    # create
+      ddl-auto: ${hibernate1.ddl-auto}    # create
     show-sql: true
   sql:
     init:
@@ -25,6 +25,25 @@ spring:
       settings.trace: false
       settings.web-allow-others: false
   datasource:
-    url: ${datasource.url} #jdbc:postgresql://localhost:5432/users_repo
-    username: ${datasource.username} #forum
-    password: ${datasource.password} #ForumPassword
+    url: ${datasource1.url} #jdbc:postgresql://localhost:5432/users_repo
+    username: ${datasource1.username} #forum
+    password: ${datasource1.password} #ForumPassword
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:9000/jwks2.json
+          issuer-uri: http://localhost:9000
+
+security:
+  oauth2:
+    resource:
+      jwt:
+#        key-value: http://localhost:9000/jwk.json
+        key-uri: http://localhost:9000/jwk.json
+#      jwk:
+#        key-set-uri: http://localhost:9000/jwk.json
+#    resourceserver:
+#      jwt:
+#        jwk-set-uri: http://localhost:9000/jwks.json

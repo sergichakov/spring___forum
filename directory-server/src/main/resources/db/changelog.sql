@@ -22,26 +22,28 @@
 -- values ('dirname1','code1','title1', 1.1),
 --         ('dirname2','code2','title2', 2.1);
 
-DROP TABLE IF EXISTS DIRECTORY;
-DROP SEQUENCE IF EXISTS directory_directory_id_seq;
-create table directory
+DROP TABLE IF EXISTS DIRECTORIES___________________;
+DROP SEQUENCE IF EXISTS directories_directory_id_seq;
+create table directories
 (
-    directory_id bigserial
-        constraint directory_pk
-            primary key,
-    order_num      bigserial,
-    sub_dir_id bigserial,
-    topic_id     bigserial,
-    creation_date        TIMESTAMP default current_timestamp,
-    dir_name varchar(100)
+    creation_date timestamp(6),
+    directory_id  bigserial
+        primary key,
+    order_num     bigint,
+    sub_dir_id    bigint,
+    topic_id      bigint,
+    dir_name      varchar(255)
 );
 
-alter table directory
+alter table directories
     owner to forum;
 
-insert into DIRECTORY ( order_num, topic_id, dir_name)
+insert into DIRECTORIES ( order_num, topic_id, dir_name)
 values (1, 1, 'Root dir'),
        (2, 2, 'Sub_dir dir');
+
+
+
 ----------------------------------------------------------------
 -- DROP TABLE IF EXISTS USER_ROLE;
 -- DROP TABLE IF EXISTS CONTACT;
