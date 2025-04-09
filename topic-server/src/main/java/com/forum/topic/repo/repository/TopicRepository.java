@@ -12,7 +12,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository // i added it because could not find this repository bean
 @RepositoryRestResource(collectionResourceRel = "productdata", path = "productdata")
-public interface TopicRepository extends CrudRepository<TopicEntity, Long> { // было Long
+public interface TopicRepository extends CrudRepository<TopicEntity, Long> {
 
 	public List<TopicEntity> findByPostId(@Param("postId") Long postId);
 	TopicEntity findByPostIdAndUserOwnerId(@Param("postId") Long postId, @Param("userOwnerId") Long userOwnerId);

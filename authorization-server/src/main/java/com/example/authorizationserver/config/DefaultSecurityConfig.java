@@ -19,12 +19,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
 
-import javax.servlet.http.HttpServletRequest;
+//import javax.servlet.http.HttpServletRequest;
 
 import static org.springframework.security.config.Customizer.withDefaults;
+
 @Configuration
-@EnableWebSecurity//////////////////////////////////////////////////////////////
-//
+@EnableWebSecurity
 public class DefaultSecurityConfig {
     @Autowired
     private CustomUserDetailsService userDetailsService;
@@ -34,35 +34,28 @@ public class DefaultSecurityConfig {
         ////https://stackoverflow.com/questions/49201779/spring-boot-do-not-send-hsts-header
         http.headers().httpStrictTransportSecurity().disable().and()
                 .csrf(CsrfConfigurer::disable)// An expected CSRF token cannot be found
-                //.antMatcher("/jwks").anonymous().and()
-                .authorizeRequests(authorizeRequests ->{
-                    authorizeRequests.antMatchers("/jwks").permitAll();//.hasAnyAuthority()..permitAll();
+                .authorizeHttpRequests(authorizeRequests -> {
+                            authorizeRequests.requestMatchers("/jwks").permitAll();
+                            authorizeRequests.requestMatchers("/oauth2").permitAll();
+                            authorizeRequests.requestMatchers("/oauth2/**").permitAll();
+                            authorizeRequests.requestMatchers("/login").permitAll();
+                            authorizeRequests
+                                    .anyRequest()
+                                    .authenticated();
+                        }
+                );
+        //        .oauth2ResourceServer().jwt();
+        http
+                // .oauth2ResourceServer(oauth2 -> oauth2
+                //         .jwt(jwt -> jwt///////////////////"http://authorization-server:9000/jwks.json"
+                //                 .jwkSetUri("http://localhost:9000/jwks.json")
+                //         )
+                //)
+                .formLogin(withDefaults());
 
-                        authorizeRequests
-                                .anyRequest()
-                                .authenticated();//.authenticated(); было так потом попробовал по другому
-                    }
-                )
-                .oauth2ResourceServer().jwt();http
-//                .oauth2ResourceServer(oauth2 -> oauth2
-//                        .jwt(jwt -> jwt///////////////////"http://authorization-server:9000/jwks.json"
-//                                .jwkSetUri("http://localhost:9000/jwks.json")
-//                        )
-//                )
-                .formLogin(withDefaults());//".cors().disable()   //// I added it after
-                ////.csrf().disable().headers().frameOptions().disable();
         return http.build();
     }
 
-//    @Bean
-    UserDetailsService users() {
-        UserDetails user = User.withDefaultPasswordEncoder()
-                .username("admin")
-                .password("password")
-                .roles("USER")
-                .build();
-        return new InMemoryUserDetailsManager(user);
-    }
     @Bean
     public PasswordEncoder passwordEncoder() {
         PasswordEncoder PASSWORD_ENCODER = PasswordEncoderFactories.createDelegatingPasswordEncoder();

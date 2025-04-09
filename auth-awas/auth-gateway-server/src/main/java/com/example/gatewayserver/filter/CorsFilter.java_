@@ -1,0 +1,39 @@
+package com.example.gatewayserver.filter;
+
+import com.sun.net.httpserver.Filter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.security.SecurityProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.reactive.CorsWebFilter;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
+
+import java.io.IOException;
+import java.util.Arrays;
+
+@Component
+public class CorsFilter {
+    //@Value()
+
+    @Bean
+    CorsWebFilter corsWebFilter() {
+        CorsConfiguration corsConfig = new CorsConfiguration();
+        corsConfig.setAllowedOrigins(Arrays.asList("http://localhost:18071","http://localhost:8080"));
+        corsConfig.setMaxAge(8000L);
+        corsConfig.addAllowedMethod("PUT");
+        corsConfig.addAllowedMethod("GET");
+        corsConfig.addAllowedMethod("CREATE");
+        corsConfig.addAllowedMethod("DELETE");
+        corsConfig.addAllowedHeader("Access-Control-Allow-Origin");
+
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", corsConfig);
+
+        return new CorsWebFilter(source);
+    }
+}

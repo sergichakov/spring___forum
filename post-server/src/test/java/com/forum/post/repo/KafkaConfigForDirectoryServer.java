@@ -22,21 +22,12 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 
-@Configuration    //now it is not a @Bean it conflicts with actual KafkaConfig
+@Configuration
 public class KafkaConfigForDirectoryServer {
-    @Value("${spring.embedded.kafka.brokers}")//("${spring.kafka.bootstrap-servers}")
+    @Value("${spring.embedded.kafka.brokers}")
     private String bootstrapServers;
     @Value("${kafka.topic.product.request}")
     private String requestTopic;
-//    @Autowired
-//    Map<String, Object> producerConfigs;
-//    @Autowired
-//    Map<String, Object> consumerConfigs;
-//    @Autowired
-//    ProducerFactory<String, Topics> replyProducerFactory;
-//    @Autowired
-//    KafkaTemplate<String, Topics> replyTemplate;
-
     @Value("${kafka.request-reply.timeout-ms}")
     private Long replyTimeout;
     @Value("${kafka.topic.product.reply}")
@@ -57,7 +48,7 @@ public class KafkaConfigForDirectoryServer {
 
         return props;
     }
-//    @Bean
+
     public ProducerFactory<String, Posts> replyProducerFactory2() {
         return new DefaultKafkaProducerFactory<>(producerConfigs2());
     }

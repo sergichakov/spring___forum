@@ -8,31 +8,51 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+//import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+//import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
+//import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import org.springframework.security.oauth2.core.OAuth2TokenType;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+//import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+//import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
+import org.springframework.security.oauth2.server.authorization.authentication.*;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
-import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
+//import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
+//import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 
 import java.security.KeyPair;
@@ -43,40 +63,120 @@ import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration(proxyBeanMethods = false)
+@EnableWebSecurity
 public class AuthorizationServerConfig {
+    private static final Logger LOG = LoggerFactory.getLogger(AuthorizationServerConfig.class);
+
     @Value("${auth-provider.issuer-uri}")
     private String issuer_uri;
     @Autowired
     private UserRepository userRepository;
+//    @Bean
+//    public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+//        OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+//                OAuth2AuthorizationServerConfigurer.authorizationServerSettings();
+//
+//        http
+//                .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+//                .with(authorizationServerConfigurer, (authorizationServer) ->
+//                        authorizationServer
+//                                .oidc(Customizer.withDefaults())
+//                )
+//                .authorizeHttpRequests((authorize) ->
+//                        authorizeBean
+//    public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+//        OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+//                OAuth2AuthorizationServerConfigurer.authorizationServerSettings();
+//
+//        http
+//                .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+//                .with(authorizationServerConfigurer, (authorizationServer) ->
+//                        authorizationServer
+//                                .oidc(Customizer.withDefaults())
+//                )
+//                .authorizeHttpRequests((authorize) ->
+//                        authorize
+//                                .anyRequest().authenticated()
+//                )
+//                .exceptionHandling((exceptions) -> exceptions
+//                        .defaultAuthenticationEntryPointFor(
+//                                new LoginUrlAuthenticationEntryPoint("/login"),
+//                                new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
+//                        )
+//                );
+//
+//        return http.build();
+//    }
+@Bean
+@Order(Ordered.HIGHEST_PRECEDENCE)
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+
+    // Replaced this call with the implementation of applyDefaultSecurity() to be able to add a custom redirect_uri validator
+    // OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+
+    OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+            new OAuth2AuthorizationServerConfigurer();
+
+    // Register a custom redirect_uri validator, that allows redirect uris based on https://localhost during development
+    authorizationServerConfigurer
+            .authorizationEndpoint(authorizationEndpoint ->
+                    authorizationEndpoint
+                            .authenticationProviders(configureAuthenticationValidator())
+            );
+
+    RequestMatcher endpointsMatcher = authorizationServerConfigurer
+            .getEndpointsMatcher();
+
+    http
+            .securityMatcher(endpointsMatcher)
+            .authorizeHttpRequests(authorize ->{
+//                authorize.requestMatchers("/jwks").permitAll();
+//                authorize.requestMatchers("/oauth2").permitAll();
+//                authorize.requestMatchers("/oauth2/**").permitAll();
+//                authorize.requestMatchers("/login").permitAll();
+                    authorize.anyRequest().authenticated();
+            })
+            .csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
+            .apply(authorizationServerConfigurer);
+
+    http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+            .oidc(Customizer.withDefaults()); // Enable OpenID Connect 1.0
+
+    http
+            .exceptionHandling(exceptions ->
+                    exceptions.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
+            )
+            .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
+    //http.formLogin(withDefaults());
+    return http.build();
+}
     @Bean
     public OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer() {
         return context -> {
-            //JwsHeader.Builder headers = context.getJwsHeader();
             JwtClaimsSet.Builder claims = context.getClaims();
             if (context.getTokenType().equals(OAuth2TokenType.ACCESS_TOKEN)) {
                 UsernamePasswordAuthenticationToken authentication = context.getPrincipal();
                 User user = (User) authentication.getPrincipal();
 
                 UserEntity userEntity=userRepository.findByLogin(user.getUsername());
-                //user.getAuthorities().
-                // Customize headers/claims for access_token
                 claims.claim("userId", userEntity.getId());//((CustomUser )user).getId);
                 claims.claim("role","ROLE_"+userEntity.getUserRole());
-            } //else if (context.getTokenType().getValue().equals(OidcParameterNames.ID_TOKEN)) {
-                // Customize headers/claims for id_token
-
-            //}
+            }
         };
     }
-    @Bean
+/*    @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
     public SecurityFilterChain authServerSecurityFilterChain(HttpSecurity http) throws Exception {
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
         return http.formLogin(Customizer.withDefaults()).build();
-    }
+    }*/
 
     @Bean
     public RegisteredClientRepository registeredClientRepository() {
@@ -86,18 +186,17 @@ public class AuthorizationServerConfig {
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS) // it was not heer
                 .redirectUri("http://localhost:8080/swagger-ui/index.html") //"http://127.0.0.1:8080/login/oauth2/code/gateway")
                 .scope(OidcScopes.OPENID)
                 .scope("resource.write")
                 .scope("resource.read")
-//                .scope("message.read")
-//                .scope("message.write")
+//                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build()) // it was not heer
                 .tokenSettings(TokenSettings.builder()
                         .accessTokenTimeToLive(Duration.of(60*24, ChronoUnit.MINUTES))
                         .refreshTokenTimeToLive(Duration.of(120*24, ChronoUnit.MINUTES))
                         .build())
                 .build();
-
         return new InMemoryRegisteredClientRepository(registeredClient);
     }
     @Bean
@@ -108,11 +207,14 @@ public class AuthorizationServerConfig {
     }
     @Bean
     public JWKSource<SecurityContext> jwkSource(JWKSet jwkSet) {
-//        RSAKey rsaKey = generateRsa();
-//        JWKSet jwkSet = new JWKSet(rsaKey);
+
+
         return (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
     }
-/////////////////////////////////////////////////////    @Bean
+    @Bean
+    public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
+        return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
+    }
     private static RSAKey generateRsa() {
         KeyPair keyPair = generateRsaKey();
         RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
@@ -136,40 +238,50 @@ public class AuthorizationServerConfig {
         }
         return keyPair;
     }
-
     @Bean
+    public AuthorizationServerSettings authorizationServerSettings() {
+        return AuthorizationServerSettings.builder().issuer(issuer_uri).build();
+    }
+   /* @Bean
     public ProviderSettings providerSettings() {
         return ProviderSettings.builder()
                 .issuer(issuer_uri) //"http://localhost:9000") ////
                 .build();
-    }
-    @Bean
-    private static RSAKey fakePermanentRsa()  {
-        //KeyPair keyPair = generateRsaKey();
-        //complement JavascriptTokenKey"eyJraWQiOiI5Mjg4MzgzNC05ZjI0LTQyMWYtYTQ1MS0zODMyOTA3NjNlMjciLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImF1ZCI6ImdhdGV3YXkiLCJuYmYiOjE3NDMyNTg5MzUsInJvbGUiOiJST0xFX0FETUlOIiwiaXNzIjoiaHR0cDpcL1wvbG9jYWxob3N0OjkwMDAiLCJleHAiOjE3NDMzNDUzMzUsImlhdCI6MTc0MzI1ODkzNSwidXNlcklkIjoyfQ.oK0hSXAyTWGwXFN6aIiHgNQXBIn334cljQXYqjf4CVMN8b5y0O-FbE32Y3Q6Jj3XSCa8CArHtL3pIRQe_9vCipzPBz6iwNKRHBr0pA18NEIZ03jK6RcIgi7Nn6FxJ7Q6_kek931j6LJjOlxChH6fu49efCI-T0s1-wJVgmTVzdLQo6af8IJ1SYn-d3yNWgHm7Z6GuwBLYHaPhJbBrAD3gWxta7bo_VK6kqEptTFdQHhtU4MgqrDoKD67wFZHLWWbnQWTusrY7ID58qlaXfwKH8HiSq3HGuEK9HIq__BzWmRez8lwM_5QoLnK35dRA9Dde3NZWKBGYS4jhoq6j4Wo-g"
-        String jwtKeyString="{\"kty\":\"RSA\",\"e\":\"AQAB\",\"kid\":\"b5b6eae6-ee0b-4e70-b9a7-8d7a934f9647\",\"n\":\"oVuxhqsz2zoRBVpD2UASlKQzhy5r_4xuYZGechHqR9ZfcLdVG1MOypZXjwvzj-4WpopPKOriWlwkfKJ6PBUmMTbtUZopH5Yte15iru7tgPxKQoYdUiMlJVGSObytGb0AX35_gfg2b-k1g8iR6LiNMf2ozC_1SGAbkGMrE0zPKxKTNNLQ2mLNKvL13U7mXtytVB0nsAPix52aQ0jrGVLCg5purV2rDGRP02qsrOMEf9cj514piq3cOz4NCzNw8k5UmkOJKCg5BkqOp494I5nVjG8ypudJo_71pplcgmEbraMkI_opLH-RJa5SimA-RN68ktp6wMMmKi04aL3zoRMaqQ\"}";
-        RSAKey rsaKey=null; String keyId=null;
-        try {
-            rsaKey=RSAKey.parse(jwtKeyString);
-            keyId=rsaKey.getKeyID();
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
+    }*/
 
-        RSAPublicKey publicRSAKey = null;//keyPair.getPublic();
-        PublicKey publicKey=null;
-        try {
-            publicRSAKey = (RSAPublicKey) rsaKey.toRSAPublicKey();
-            publicKey=rsaKey.toPublicKey();
-        } catch (JOSEException e) {
-            throw new RuntimeException(e);
+    private Consumer<List<AuthenticationProvider>> configureAuthenticationValidator() {
+        return (authenticationProviders) ->
+                authenticationProviders.forEach((authenticationProvider) -> {
+                    if (authenticationProvider instanceof OAuth2AuthorizationCodeRequestAuthenticationProvider) {
+                        Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authenticationValidator =
+                                // Override default redirect_uri validator
+                                new CustomRedirectUriValidator()
+                                        // Reuse default scope validator
+                                        .andThen(OAuth2AuthorizationCodeRequestAuthenticationValidator.DEFAULT_SCOPE_VALIDATOR);
+
+                        ((OAuth2AuthorizationCodeRequestAuthenticationProvider) authenticationProvider)
+                                .setAuthenticationValidator(authenticationValidator);
+                    }
+                });
+    }
+    static class CustomRedirectUriValidator implements Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> {
+
+        @Override
+        public void accept(OAuth2AuthorizationCodeRequestAuthenticationContext authenticationContext) {
+            OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
+                    authenticationContext.getAuthentication();
+            RegisteredClient registeredClient = authenticationContext.getRegisteredClient();
+            String requestedRedirectUri = authorizationCodeRequestAuthentication.getRedirectUri();
+
+            LOG.trace("Will validate the redirect uri {}", requestedRedirectUri);
+
+            // Use exact string matching when comparing client redirect URIs against pre-registered URIs
+            if (!registeredClient.getRedirectUris().contains(requestedRedirectUri)) {
+                LOG.trace("Redirect uri is invalid!");
+                OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST);
+//ithing i dont need it                throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, null); //i think i dont need IT
+            }
+            LOG.trace("Redirect uri is OK!");
         }
-        // delete next line if you can
-        System.out.println("Oper RSA New key "+publicRSAKey );
-        //RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-        return new RSAKey.Builder(publicRSAKey)
-                //.privateKey(privateKey)
-                .keyID(keyId)//UUID.randomUUID().toString())
-                .build();
     }
 }

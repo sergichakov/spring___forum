@@ -19,25 +19,9 @@ public class Topic {
 	private Long postId;
 	private String topicLabel;
 	private Long directoryId;
-	//    private Long topicId;
 	private String postContent;
 	private Timestamp creationDate;
 	private Timestamp changeDate;
-	//    private Long userCreatorId;
 	private Long userOwnerId;
-	//@ApiModelProperty(position = 1)
-/*	private Long directoryId; // String directoryId
 
-
-	private Long order;
-
-	private Long subDirId;
-
-	private Timestamp creationDate;
-
-    private	String topicId;
-
-	private String name;
-
- */
 }

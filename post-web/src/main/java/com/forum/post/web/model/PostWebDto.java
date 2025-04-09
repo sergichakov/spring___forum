@@ -14,7 +14,6 @@ import java.util.UUID;
 @NoArgsConstructor
 public class PostWebDto {
 
-    // without "directoryId" don't know can I otherwise
     private UUID postId;
     private Long topicId;
     private String postContent;

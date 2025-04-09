@@ -1,8 +1,8 @@
 package com.forum.directory.web.controller;
 
-import com.forum.directory.web.service  .DirectoryWebService;
-import com.forum.directory.web.service.DirectoryWebServiceImpl;
 import com.forum.directory.kafka.event.Directories;
+import com.forum.directory.web.service.DirectoryWebService;
+import com.forum.directory.web.service.DirectoryWebServiceImpl;
 import com.forum.kafka.request_reply_util.CompletableFutureReplyingKafkaOperations;
 import com.forum.kafka.request_reply_util.CompletableFutureReplyingKafkaTemplate;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -23,19 +23,17 @@ import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.KafkaMessageListenerContainer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
-import org.springframework.kafka.test.EmbeddedKafkaBroker;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
+
 @Configuration
 public class WebControllerKafkaConfiguration {
-//    @Autowired
-//    private EmbeddedKafkaBroker embeddedKafkaBroker;
-    @Value("${spring.embedded.kafka.brokers}") //("${spring.kafka.consumer.bootstrap-servers}")
-    private String bootstrapServers;  //DirectoryWebControllerIntegrationTest.embeddedKafkaBroker.getBrokersAsString();
-    @Value("${test.kafka.web.group-id}")//"${spring.kafka.consumer.group-id}")
+    @Value("${spring.embedded.kafka.brokers}")
+    private String bootstrapServers;
+    @Value("${test.kafka.web.group-id}")
     private String webGroupId;
 
     @Value("${test.kafka.server.group-id}")
@@ -49,16 +47,18 @@ public class WebControllerKafkaConfiguration {
 
     @Autowired
     private Environment env;
-//    @Value("${kafka.topic.product.reply}") //// may be it is wrong and need get it back.
-    private String replyTopic = "directory-req-reply-topic";//env.getProperty("kafka.topic.product.reply","directory-req-reply-topic");
+
+    private String replyTopic = "directory-req-reply-topic";
 
     @Value("${kafka.request-reply.timeout-ms}")
     private Long replyTimeout;
+
     @Bean
-    DirectoryWebService webService3(){
+    DirectoryWebService webService3() {
         return new DirectoryWebServiceImpl();
     }
-   @Bean
+
+    @Bean
     public CompletableFutureReplyingKafkaOperations<String, Directories, Directories> replyKafkaTemplate() {
         CompletableFutureReplyingKafkaTemplate<String, Directories, Directories> requestReplyKafkaTemplate =
                 new CompletableFutureReplyingKafkaTemplate<>(requestProducerFactory(),
@@ -67,10 +67,12 @@ public class WebControllerKafkaConfiguration {
         requestReplyKafkaTemplate.setDefaultReplyTimeout(Duration.of(replyTimeout, ChronoUnit.MILLIS));
         return requestReplyKafkaTemplate;
     }
+
     @Bean
     public ProducerFactory<String, Directories> requestProducerFactory() {
         return new DefaultKafkaProducerFactory<>(producerConfigs());
     }
+
     @Bean
     public Map<String, Object> consumerConfigs() {
         Map<String, Object> props = new HashMap<>();
@@ -81,6 +83,7 @@ public class WebControllerKafkaConfiguration {
 
         return props;
     }
+
     @Bean
     public Map<String, Object> producerConfigs() {
         Map<String, Object> props = new HashMap<>();
@@ -90,11 +93,13 @@ public class WebControllerKafkaConfiguration {
 
         return props;
     }
+
     @Bean
     public KafkaMessageListenerContainer<String, Directories> replyListenerContainer() {
         ContainerProperties containerProperties = new ContainerProperties(replyTopic);
         return new KafkaMessageListenerContainer<>(replyConsumerFactory(), containerProperties);
     }
+
     @Bean
     public ConsumerFactory<String, Directories> replyConsumerFactory() {
         JsonDeserializer<Directories> jsonDeserializer = new JsonDeserializer<>();
@@ -102,20 +107,13 @@ public class WebControllerKafkaConfiguration {
         return new DefaultKafkaConsumerFactory<>(consumerConfigs(), new StringDeserializer(),
                 jsonDeserializer);
     }
+
     @Bean
     public NewTopic replyTopic() {
         Map<String, String> configs = new HashMap<>();
         configs.put("retention.ms", replyTimeout.toString());
         return new NewTopic(replyTopic, numPartitions, (short) 1).configs(configs);
     }
-
- /*
-*/
-
-
-
-
-
 
     @Bean
     public Map<String, Object> consumerConfigsForServer() {
@@ -138,12 +136,10 @@ public class WebControllerKafkaConfiguration {
 
     @Bean
     public ConsumerFactory<String, Directories> requestConsumerFactory() {
-
         JsonDeserializer<Directories> jsonDeserializer = new JsonDeserializer<>();
         jsonDeserializer.addTrustedPackages(Directories.class.getPackage().getName());
         return new DefaultKafkaConsumerFactory<>(consumerConfigsForServer(), new StringDeserializer(),
                 jsonDeserializer);
-
     }
 
     @Bean

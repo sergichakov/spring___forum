@@ -52,10 +52,9 @@ import org.springframework.context.annotation.Configuration;
                 @Server(url = "${app.host-url}")
         },
         security = {
-//              https://stackoverflow.com/questions/61477056/why-is-the-authorization-header-missing-in-requests-sent-from-swagger-ui
                 @SecurityRequirement(name = "JWT"),
                 @SecurityRequirement(name = "basicAuth")
-        }//"basicAuth")
+        }
 )
 @Configuration
 public class OpenApiConfig {
@@ -64,15 +63,7 @@ public class OpenApiConfig {
     public GroupedOpenApi api() {
         return GroupedOpenApi.builder()
                 .group("REST API")
-                .pathsToMatch("/**")//все этдпоинты .pathsToMatch("/api/**","/**")
+                .pathsToMatch("/**")
                 .build();
     }
-
-   /* private SecurityScheme createAPIKeyScheme() {
-        return new SecurityScheme(){type(SecuritySchemeType.HTTP)
-                .bearerFormat("JWT")
-                .scheme("bearer");
-    }}
-
-  */
 }

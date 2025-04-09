@@ -72,7 +72,7 @@ public class PostKafkaConfig {
 	    return props;
 	  }
 
-	  @Bean//CompletableFutureReplyingKafkaOperations<String, Posts, Posts>
+	  @Bean
 	  public CompletableFutureReplyingKafkaOperations<String, Posts, Posts> replyKafkaTemplate() {
 	    CompletableFutureReplyingKafkaTemplate<String, Posts, Posts> requestReplyKafkaTemplate =
 	        new CompletableFutureReplyingKafkaTemplate<>(requestProducerFactory(),

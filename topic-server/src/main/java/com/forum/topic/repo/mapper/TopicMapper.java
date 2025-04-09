@@ -6,8 +6,6 @@ import com.forum.topic.repo.model.TopicEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
-
- //// Because could not find PostMapper Bean
 @Mapper(componentModel = "spring")
 public interface TopicMapper {
     TopicMapper INSTANCE= Mappers.getMapper(TopicMapper.class);

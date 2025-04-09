@@ -13,7 +13,6 @@ import java.util.UUID;
 @RepositoryRestResource(collectionResourceRel = "productdata", path = "productdata")
 public interface TopicPagingRepository extends PagingAndSortingRepository<TopicEntity, Long> { // было Long
     public List<TopicEntity> findByPostId(@Param("postId") Long postId, Pageable pageable);
-    //public List<PostEntity> f
     public List<TopicEntity> findByPostIdAndUserOwnerId(@Param("postId") Long postId, @Param("userOwnerId") Long userOwnerId, Pageable pageable);
     public List<TopicEntity> findByUserOwnerId(@Param("userOwnerId") Long userOwnerId, Pageable pageable);
 }

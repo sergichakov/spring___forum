@@ -10,6 +10,6 @@ import java.util.List;
 
 @RepositoryRestResource(collectionResourceRel = "productdata", path = "productdata")
 public interface DirectoryPagingRepository extends PagingAndSortingRepository<DirectoryThemeEntity, Long> {
-    public List<DirectoryThemeEntity> findByName (@Param("name") String  name, Pageable pageable);
+    public List<DirectoryThemeEntity> findByName(@Param("name") String name, Pageable pageable);
 
 }

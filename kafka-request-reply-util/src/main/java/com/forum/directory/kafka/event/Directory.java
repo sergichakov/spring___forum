@@ -1,12 +1,10 @@
 
 package com.forum.directory.kafka.event;
 
-//import io.swagger.annotations.ApiModelProperty;
 
 import lombok.*;
 
 import java.sql.Timestamp;
-import java.util.UUID;
 
 
 @Getter
@@ -17,28 +15,15 @@ import java.util.UUID;
 @AllArgsConstructor
 public class Directory {
 
-	//@ApiModelProperty(position = 1)
-	private Long directoryId; // String directoryId
-/*
-	//@ApiModelProperty(position = 2)
-	private String name;
-	
-	//@ApiModelProperty(position = 3)
-	private String code;;
-	
-	//@ApiModelProperty(position = 4)
-	private String title;
-	
-	//@ApiModelProperty(position = 5)
-	private Double price;
-	*/
-	private Long order;
+    private Long directoryId;
 
-	private Long subDirId;
+    private Long order;
 
-	private Timestamp creationDate;
+    private Long subDirId;
 
-    private	Long topicId;
+    private Timestamp creationDate;
 
-	private String name;
+    private Long topicId;
+
+    private String name;
 }

@@ -29,10 +29,10 @@ public class ResourceServerConfig {
                 //.mvcMatchers("/resource/**")
                 //.authorizeRequests()
                 //.mvcMatchers("/resource/**")
-//                .access("hasAuthority('SCOPE_resource.read')")
-//                .and()
-//                .oauth2ResourceServer()
-//                .jwt();
+
+
+
+
         return http.build();
     }
     @Bean

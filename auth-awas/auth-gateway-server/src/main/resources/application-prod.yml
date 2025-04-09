@@ -1,0 +1,8 @@
+
+provider:
+  issuer-uri: http://authorization-server:9000
+eureka:
+  defaultZoneUrl: http://u:p@localhost:8761/eureka/
+
+app:
+  auth-server: http://auth-gateway-server:9000

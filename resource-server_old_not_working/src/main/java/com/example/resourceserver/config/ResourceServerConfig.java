@@ -26,7 +26,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 public class ResourceServerConfig {
     @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
     String issuerUri; //site JWT
-//    @Bean
+
 /*    SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         //RequestMatcher requestMatcher=new RegexRequestMatcher("/openapi/**","");
 
@@ -37,10 +37,10 @@ public class ResourceServerConfig {
                                 .anonymous()
                 )
                 .formLogin(withDefaults());
-//                .authorizeHttpRequests(authorizeRequests ->
-//                        authorizeRequests
-//                                .requestMatchers("/openapi/**")
-//                                .permitAll());
+
+
+
+
 
 
         return http.build();
@@ -61,20 +61,20 @@ public class ResourceServerConfig {
                             .requestMatchers("/login").permitAll()
                     .requestMatchers("/resource").authenticated()
                                         ;
-//                    .requestMatchers("/api/hello").hasAuthority("SCOPE_resource.read");
-//                            .and().formLogin(form -> form
-//                                    .loginPage("/view/login")
-//                                    .permitAll()//.defaultSuccessUrl("/", true)
-//                            ).oauth2Login()
+
+
+
+
+
                             //.and().httpBasic().oauth2Login()
-//                            .loginPage("/view/login");
+
                             //.and().oauth2ResourceServer()
                             //.jwt();
-//                }catch(Exception e){
-//                    System.out.println("exception ins securityFilterChain");
-//                    e.printStackTrace();
-//                }
-//                access("hasAuthority('SCOPE_resource.read')")
+
+
+
+
+
 
                 }).cors().disable();//.formLogin(withDefaults())
 /*               .securityMatcher("/api/**")
@@ -98,29 +98,29 @@ public class ResourceServerConfig {
 ////.oauth2ResourceServer(oauth->oauth.jwt(Customizer.withDefaults())).formLogin(withDefaults());//new Customizer<OAuth2ResourceServerConfigurer<String>.JwtConfigurer>()));
         String jwksUri= "";
 
-//        http.oauth2ResourceServer( server -> server.jwt(jwtConfigurer -> jwtConfigurer.jwkSetUri(jwksUri)));
 
-//        http.oauth2ResourceServer( server -> server.jwt(jwtConfigurer -> jwtConfigurer.decoder( jwtDecoder() )));
 
-//        http.authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
-//                .oauth2Login()
-//                .loginPage("/view/login")
-//                .tokenEndpoint();
+
+
+
+
+
+
                 //.accessTokenResponseClient(accessTokenResponseClient());
 
                 //.securityMatcher("/view/**")///////////;
-//        .httpBasic().and()
-//                .formLogin(form -> form
-//                        .loginPage("/view/login")
-//                        .permitAll().defaultSuccessUrl("/", true)
-//                );
+
+
+
+
+
                 //.mvcMatchers("/resource/**")
                 //.authorizeRequests()
                 //.mvcMatchers("/resource/**")
-//                .access("hasAuthority('SCOPE_resource.read')")
-//                .and()
-//                .oauth2ResourceServer()
-//                .jwt();
+
+
+
+
 
         return http.build();
     }
@@ -137,7 +137,7 @@ public class ResourceServerConfig {
 
         return http.build();
     }/////////////////////////////////////////////////////*/
-//    @Bean
+
     UserDetailsService users() {
         UserDetails user = User.withDefaultPasswordEncoder()
                 .username("admin")

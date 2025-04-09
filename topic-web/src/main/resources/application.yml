@@ -6,10 +6,13 @@ spring:
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
   kafka:
-    bootstrap-servers: ${kafka.bootstrap-servers} #localhost:9092
+    bootstrap-servers: ${kafka.bootstrap-servers}
     consumer:
       auto-offset-reset: earliest
       group-id: topic-web
+  application: ######################
+    name: topic-web
+
 kafka:
   topic:
     product:
@@ -17,6 +20,15 @@ kafka:
       reply: topic-req-reply-topic
   request-reply:
     timeout-ms: 10000
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${eureka.defaultZoneUrl} # http://localhost:8761/eureka/
+    initialInstanceInfoReplicationIntervalSeconds: 5
+    registryFetchIntervalSeconds: 5
+  instance:
+    leaseRenewalIntervalInSeconds: 5
+    leaseExpirationDurationInSeconds: 5
 product:
   topic:
     request:
@@ -26,10 +38,10 @@ logging:
     root: info
 springdoc:
   api-docs:
-    path: /topicsweb/v3/api-docs #/topicsweb/swagger-ui/v3/api-docs
+    path: /topicsweb/v3/api-docs
   swagger-ui:
     path: /topicsweb/
-    url: /topicsweb/v3/api-docs #/topicsweb/swagger-ui/v3/api-docs
+    url: /topicsweb/v3/api-docs
 
 app:
   host-url: /

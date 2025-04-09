@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.web.client.RestTemplate;
 @Configuration
-//@PropertySource(value={"classpath:application.yml"})
 public class KafkaRequestReplyConfig {
     @Bean
     public RestTemplate restTemplate() {

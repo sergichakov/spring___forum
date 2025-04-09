@@ -12,11 +12,11 @@ public class ResourceController {
     public String getResource(@AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails user) {
 
         String authorities=""; String userName=null;String userPass=null;
-//        for (GrantedAuthority g:user.getAuthorities()){
-//            authorities+=g.getAuthority()+", ";
-//        }
-//         userName = user.getUsername();
-//         userPass = user.getPassword();
+
+
+
+
+
         return "Resource userName="+userName+" password="+userPass+ " has authorities="+authorities;
     }
 }

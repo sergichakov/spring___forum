@@ -6,11 +6,10 @@ import com.forum.post.repo.model.PostEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
-
- //// Because could not find PostMapper Bean
 @Mapper(componentModel = "spring")
 public interface PostMapper {
-    PostMapper INSTANCE= Mappers.getMapper(PostMapper.class);
+    PostMapper INSTANCE = Mappers.getMapper(PostMapper.class);
+
     Post entityToApi(PostEntity entity);
 
     PostEntity apiToEntity(Post api);

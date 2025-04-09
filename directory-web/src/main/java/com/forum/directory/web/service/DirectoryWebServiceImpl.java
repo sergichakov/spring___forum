@@ -27,10 +27,10 @@ import java.util.concurrent.ExecutionException;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 @Service
-//@RequiredArgsConstructor
 @NoArgsConstructor
-public class DirectoryWebServiceImpl implements DirectoryWebService{
+public class DirectoryWebServiceImpl implements DirectoryWebService {
     private final Logger LOGGER = LoggerFactory.getLogger(DirectoryWebServiceImpl.class);
     @Autowired
     private CompletableFutureReplyingKafkaOperations<String, Directories, Directories> replyingKafkaTemplate;
@@ -42,22 +42,22 @@ public class DirectoryWebServiceImpl implements DirectoryWebService{
     @Value("${kafka.topic.product.reply}")
     private String requestReplyTopic;
 
-    public DeferredResult<ResponseEntity<CollectionModel<DirectoryRest>>> listDirectory(Integer page, Integer numberPerPage){
+    public DeferredResult<ResponseEntity<CollectionModel<DirectoryRest>>> listDirectory(Integer page, Integer numberPerPage) {
         DeferredResult<ResponseEntity<CollectionModel<DirectoryRest>>> deferredResult = new DeferredResult<>();
 
         Directories directoriesRequest = new Directories();
         directoriesRequest.setPage(page);
         directoriesRequest.setNumberPerPage(numberPerPage);
-        directoriesRequest.setOperation(OperationDirectoryKafka.RETREIVE_ALL);  //Directories.RETREIVE_ALL)
+        directoriesRequest.setOperation(OperationDirectoryKafka.RETREIVE_ALL);
 
-        CompletableFuture<Directories> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
+        CompletableFuture<Directories> completableFuture = replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
 
         completableFuture.thenAccept(directories -> {
 
             List<Directory> directoryList = directories.getDirectories();
 
-            Link links[] = { linkTo(methodOn(DirectoryRestController.class).getAllDirectories(page,numberPerPage)).withSelfRel(),
-                    linkTo(methodOn(DirectoryRestController.class).getAllDirectories(page,numberPerPage)).withRel("getAllDirectories") };
+            Link links[] = {linkTo(methodOn(DirectoryRestController.class).getAllDirectories(page, numberPerPage)).withSelfRel(),
+                    linkTo(methodOn(DirectoryRestController.class).getAllDirectories(page, numberPerPage)).withRel("getAllDirectories")};
 
             List<DirectoryRest> list = new ArrayList<DirectoryRest>();
             for (Directory directory : directoryList) {
@@ -80,18 +80,19 @@ public class DirectoryWebServiceImpl implements DirectoryWebService{
         //delay();
         return deferredResult;
     }
-    public DeferredResult<ResponseEntity<DirectoryRest>> getDirectory( Long id){
+
+    public DeferredResult<ResponseEntity<DirectoryRest>> getDirectory(Long id) {
         DeferredResult<ResponseEntity<DirectoryRest>> deferredResult = new DeferredResult<>();
 
         Directories directoriesRequest = new Directories();
-        directoriesRequest.setOperation(OperationDirectoryKafka.RETREIVE_DETAILS);//Directories.RETREIVE_DETAILS
+        directoriesRequest.setOperation(OperationDirectoryKafka.RETREIVE_DETAILS);
         Directory directory = new Directory();
         directory.setDirectoryId(id);
         List<Directory> directoryRequestList = new ArrayList<>();
         directoryRequestList.add(directory);
         directoriesRequest.setDirectories(directoryRequestList);
 
-        CompletableFuture<Directories> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
+        CompletableFuture<Directories> completableFuture = replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
 
         completableFuture.thenAccept(directories -> {
 
@@ -102,16 +103,15 @@ public class DirectoryWebServiceImpl implements DirectoryWebService{
             if (directoryList.iterator().hasNext()) {
                 directoryRetreived = directoryList.iterator().next();
                 directoryId = directoryRetreived.getDirectoryId();
-                LOGGER.debug("Product with productId : {} retreived from Backend Microservice", directoryId);
+                LOGGER.debug("Directory with directoryId : {} retreived from Backend Microservice", directoryId);
 
                 DirectoryRest directoryHateoas = convertEntityToHateoasEntity(directoryRetreived);
                 directoryHateoas.add(linkTo(methodOn(DirectoryRestController.class).getDirectory(directoryHateoas.getDirectoryId())).withSelfRel());
 
                 deferredResult.setResult(new ResponseEntity<DirectoryRest>(directoryHateoas, HttpStatus.OK));
 
-            }
-            else {
-                LOGGER.debug("Product with productId : {} not retreived from Backend Microservice", id);
+            } else {
+                LOGGER.debug("Directory with directoryId : {} not retreived from Backend Microservice", id);
                 deferredResult.setResult(new ResponseEntity<DirectoryRest>(HttpStatus.NOT_FOUND));
             }
 
@@ -121,37 +121,37 @@ public class DirectoryWebServiceImpl implements DirectoryWebService{
         });
         return deferredResult;
     }
-    public DeferredResult<ResponseEntity<DirectoryRest>> createDirectory(DirectoryWebDto createDirectoryWebDto) throws ExecutionException, InterruptedException{
+
+    public DeferredResult<ResponseEntity<DirectoryRest>> createDirectory(DirectoryWebDto createDirectoryWebDto) throws ExecutionException, InterruptedException {
         DeferredResult<ResponseEntity<DirectoryRest>> deferredResult = new DeferredResult<>();
 
-        Directory directoryRest=modelMapper.map(createDirectoryWebDto,  Directory.class); // очень интересно, сработает ли
+        Directory directoryRest = modelMapper.map(createDirectoryWebDto, Directory.class);
         directoryRest.setDirectoryId(null);
         Directories directoriesRequest = new Directories();
-        directoriesRequest.setOperation(OperationDirectoryKafka.CREATE);//Directories.CREATE
+        directoriesRequest.setOperation(OperationDirectoryKafka.CREATE);
         List<Directory> directoryRequestList = new ArrayList<>();
         directoryRequestList.add(directoryRest);
         directoriesRequest.setDirectories(directoryRequestList);
 
-        CompletableFuture<Directories> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
+        CompletableFuture<Directories> completableFuture = replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
 
         completableFuture.thenAccept(directories -> {
 
             List<Directory> directoryList = directories.getDirectories();
             Directory directoryRetreived = null;
-            Long directoryId = null; //String directoryId
+            Long directoryId = null;
 
             if (directoryList.iterator().hasNext()) {
                 directoryRetreived = directoryList.iterator().next();
                 directoryId = directoryRetreived.getDirectoryId();
-                LOGGER.debug("Product with productId : {} created by Backend Microservice", directoryId);
+                LOGGER.debug("Directory with directoryId : {} created by Backend Microservice", directoryId);
 
                 DirectoryRest directoryHateoas = convertEntityToHateoasEntity(directoryRetreived);
                 directoryHateoas.add(linkTo(methodOn(DirectoryRestController.class).getDirectory(directoryHateoas.getDirectoryId())).withSelfRel());
                 deferredResult.setResult(new ResponseEntity<DirectoryRest>(directoryHateoas, HttpStatus.OK));
 
-            }
-            else {
-                LOGGER.debug("Product with code : {} not created by Backend Microservice");//, directory.getCode());
+            } else {
+                LOGGER.debug("Directory with code : {} not created by Backend Microservice");
                 deferredResult.setResult(new ResponseEntity<DirectoryRest>(HttpStatus.CONFLICT));
             }
 
@@ -163,36 +163,36 @@ public class DirectoryWebServiceImpl implements DirectoryWebService{
         LOGGER.info("Ending");
         return deferredResult;
     }
+
     public DeferredResult<ResponseEntity<DirectoryRest>> updateDirectory(Long id, DirectoryWebDto directoryWebDto) {
         DeferredResult<ResponseEntity<DirectoryRest>> deferredResult = new DeferredResult<>();
-        Directory directory =modelMapper.map(directoryWebDto,  Directory.class);
+        Directory directory = modelMapper.map(directoryWebDto, Directory.class);
         directory.setDirectoryId(id);
         Directories directoriesRequest = new Directories();
-        directoriesRequest.setOperation(OperationDirectoryKafka.UPDATE);//Directories.UPDATE
+        directoriesRequest.setOperation(OperationDirectoryKafka.UPDATE);
         List<Directory> directoryRequestList = new ArrayList<>();
         directoryRequestList.add(directory);
         directoriesRequest.setDirectories(directoryRequestList);
 
-        CompletableFuture<Directories> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
+        CompletableFuture<Directories> completableFuture = replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
 
         completableFuture.thenAccept(directories -> {
 
             List<Directory> directoryList = directories.getDirectories();
             Directory directoryRetreived = null;
-            Long directoryId = null; //String directoryId
+            Long directoryId = null;
 
             if (directoryList.iterator().hasNext()) {
                 directoryRetreived = directoryList.iterator().next();
                 directoryId = directoryRetreived.getDirectoryId();
-                LOGGER.debug("Product with productId : {} updated by Backend Microservice", directoryId);
+                LOGGER.debug("Directory with directoryId : {} updated by Backend Microservice", directoryId);
 
                 DirectoryRest directoryHateoas = convertEntityToHateoasEntity(directoryRetreived);
                 directoryHateoas.add(linkTo(methodOn(DirectoryRestController.class).getDirectory(directoryHateoas.getDirectoryId())).withSelfRel());
                 deferredResult.setResult(new ResponseEntity<DirectoryRest>(directoryHateoas, HttpStatus.OK));
 
-            }
-            else {
-                LOGGER.debug("Product with code : {} not updated by Backend Microservice", directoryId);
+            } else {
+                LOGGER.debug("Directory  with code : {} not updated by Backend Microservice", directoryId);
                 deferredResult.setResult(new ResponseEntity<DirectoryRest>(HttpStatus.NOT_FOUND));
             }
 
@@ -203,38 +203,30 @@ public class DirectoryWebServiceImpl implements DirectoryWebService{
         });
         return deferredResult;
     }
-    public DeferredResult<ResponseEntity<DirectoryRest>> deleteDirectory(Long id){
+
+    public DeferredResult<ResponseEntity<DirectoryRest>> deleteDirectory(Long id) {
         DeferredResult<ResponseEntity<DirectoryRest>> deferredResult = new DeferredResult<>();
 
         Directories directoriesRequest = new Directories();
-        directoriesRequest.setOperation(OperationDirectoryKafka.DELETE);//Directories.DELETE
+        directoriesRequest.setOperation(OperationDirectoryKafka.DELETE);
 
         List<Directory> directoryRequestList = new ArrayList<>();
         Directory directoryToDelete = new Directory();
         directoryToDelete.setDirectoryId(id);
-//        directoryToDelete.setCreationDate(new Timestamp(System.currentTimeMillis()));
-        //directoryToDelete.setOrder(0L);
-//        directoryToDelete.setOrder(null);
-//        directoryToDelete.setSubDirId(null);
-//        directoryToDelete.setTopicId(null);
-//		directoryToDelete.setName("");
-//		directoryToDelete.setCode("");
-//		directoryToDelete.setTitle("");
-//		directoryToDelete.setPrice(0D);
+
         directoryRequestList.add(directoryToDelete);
         directoriesRequest.setDirectories(directoryRequestList);
 
-        CompletableFuture<Directories> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
+        CompletableFuture<Directories> completableFuture = replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
 
         completableFuture.thenAccept(directories -> {
 
-            if (directories.getOperation().equals(OperationDirectoryKafka.SUCCESS)) {//contentEquals
-                LOGGER.debug("Product with productId : {} deleted by Backend Microservice", id);
+            if (directories.getOperation().equals(OperationDirectoryKafka.SUCCESS)) {
+                LOGGER.debug("Directory with directoryId : {} deleted by Backend Microservice", id);
                 deferredResult.setResult(new ResponseEntity<DirectoryRest>(HttpStatus.NO_CONTENT));
 
-            }
-            else {
-                LOGGER.debug("Product with id : {} suspected not deleted by Backend Microservice", id);
+            } else {
+                LOGGER.debug("Directory with id : {} suspected not deleted by Backend Microservice", id);
                 deferredResult.setResult(new ResponseEntity<DirectoryRest>(HttpStatus.NOT_FOUND));
             }
 
@@ -244,28 +236,29 @@ public class DirectoryWebServiceImpl implements DirectoryWebService{
         });
         return deferredResult;
     }
-    private DirectoryRest convertEntityToHateoasEntity(Directory directory){
-        return  modelMapper.map(directory,  DirectoryRest.class);
+
+    private DirectoryRest convertEntityToHateoasEntity(Directory directory) {
+        return modelMapper.map(directory, DirectoryRest.class);
     }
-    public DeferredResult<ResponseEntity<Long>> getMaxTopicId(){
+
+    public DeferredResult<ResponseEntity<Long>> getMaxTopicId() {
         DeferredResult<ResponseEntity<Long>> deferredResult = new DeferredResult<>();
 
         Directories directoriesRequest = new Directories();
         directoriesRequest.setOperation(OperationDirectoryKafka.GET_MAX_TOPIC_ID);//Directories.DELETE
 
-        CompletableFuture<Directories> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
+        CompletableFuture<Directories> completableFuture = replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
 
         completableFuture.thenAccept(maxTopicId -> {
 
             if (maxTopicId.getOperation().equals(OperationDirectoryKafka.SUCCESS)) {//contentEquals
-                LOGGER.debug("Product with productId : {} deleted by Backend Microservice");
-                ResponseEntity<Long> maxId=new ResponseEntity<>(maxTopicId.getMax(),HttpStatus.OK);
+                LOGGER.debug("Directory with directoryId : {} deleted by Backend Microservice");
+                ResponseEntity<Long> maxId = new ResponseEntity<>(maxTopicId.getMax(), HttpStatus.OK);
 
                 deferredResult.setResult(maxId);
 
-            }
-            else {
-                LOGGER.debug("Product with id : {} suspected not deleted by Backend Microservice");
+            } else {
+                LOGGER.debug("Directory with id : {} suspected not deleted by Backend Microservice");
                 deferredResult.setResult(new ResponseEntity<Long>(HttpStatus.NOT_FOUND));
             }
 

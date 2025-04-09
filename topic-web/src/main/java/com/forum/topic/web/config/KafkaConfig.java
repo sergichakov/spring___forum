@@ -29,7 +29,6 @@ import java.time.temporal.ChronoUnit;
 import com.forum.kafka.request_reply_util.CompletableFutureReplyingKafkaOperations;
 import com.forum.kafka.request_reply_util.CompletableFutureReplyingKafkaTemplate;
 
-
 @Configuration
 public class KafkaConfig {
 	

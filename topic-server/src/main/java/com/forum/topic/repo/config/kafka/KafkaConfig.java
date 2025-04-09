@@ -71,9 +71,7 @@ public class KafkaConfig {
 		  jsonDeserializer.addTrustedPackages(Topics.class.getPackage().getName());
 		  return new DefaultKafkaConsumerFactory<>(consumerConfigs(), new StringDeserializer(),
 		        jsonDeserializer);
-		  
 	  }
-
 	  @Bean
 	  public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, Topics>> requestReplyListenerContainerFactory() {
 	    ConcurrentKafkaListenerContainerFactory<String, Topics> factory =
@@ -82,7 +80,6 @@ public class KafkaConfig {
 	    factory.setReplyTemplate(replyTemplate());
 	    return factory;
 	  }
-	  
 	  @Bean
 	  public ProducerFactory<String, Topics> replyProducerFactory() {
 	    return new DefaultKafkaProducerFactory<>(producerConfigs());

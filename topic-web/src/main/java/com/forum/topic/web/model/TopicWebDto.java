@@ -14,15 +14,14 @@ import java.util.UUID;
 @NoArgsConstructor
 public class TopicWebDto {
 
-    // without "directoryId" don't know can I otherwise
     private Long postId;
     private String topicLabel;
     private Long directoryId;
-//    private Long topicId;
+
     private String postContent;
     private Timestamp creationDate;
     private Timestamp changeDate;
-//    private Long userCreatorId;
+
     private Long userOwnerId;
-//    private Long numberOfLikes;
+
 }

@@ -1,6 +1,5 @@
 package com.forum.directory.web.service;
 
-import com.forum.directory.kafka.event.Directory;
 import com.forum.directory.web.hateoas.model.DirectoryRest;
 import com.forum.directory.web.model.DirectoryWebDto;
 import org.springframework.hateoas.CollectionModel;

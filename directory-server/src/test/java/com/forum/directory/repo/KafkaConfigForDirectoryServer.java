@@ -24,18 +24,10 @@ import java.util.Map;
 
 @Configuration    //now it is not a @Bean it conflicts with actual KafkaConfig
 public class KafkaConfigForDirectoryServer {
-    @Value("${spring.embedded.kafka.brokers}")//("${spring.kafka.bootstrap-servers}")
+    @Value("${spring.embedded.kafka.brokers}")
     private String bootstrapServers;
     @Value("${kafka.topic.product.request}")
     private String requestDirectory;
-//    @Autowired
-//    Map<String, Object> producerConfigs;
-//    @Autowired
-//    Map<String, Object> consumerConfigs;
-//    @Autowired
-//    ProducerFactory<String, Directories> replyProducerFactory;
-//    @Autowired
-//    KafkaTemplate<String, Directories> replyTemplate;
 
     @Value("${kafka.request-reply.timeout-ms}")
     private Long replyTimeout;
@@ -43,10 +35,12 @@ public class KafkaConfigForDirectoryServer {
     private String replyDirectory;
     @Value("${spring.kafka.consumer.group-id}")
     private String groupId;
+
     @Bean
     public KafkaTemplate<String, Directories> replyTemplate2() {
         return new KafkaTemplate<>(replyProducerFactory2());
     }
+
     @Bean
     public Map<String, Object> consumerConfigs2() {
         Map<String, Object> props = new HashMap<>();
@@ -57,10 +51,11 @@ public class KafkaConfigForDirectoryServer {
 
         return props;
     }
-//    @Bean
+
     public ProducerFactory<String, Directories> replyProducerFactory2() {
         return new DefaultKafkaProducerFactory<>(producerConfigs2());
     }
+
     @Bean
     public Map<String, Object> producerConfigs2() {
         Map<String, Object> props = new HashMap<>();
@@ -79,15 +74,18 @@ public class KafkaConfigForDirectoryServer {
         requestReplyKafkaTemplate.setDefaultReplyTimeout(Duration.of(replyTimeout, ChronoUnit.MILLIS));
         return requestReplyKafkaTemplate;
     }
+
     @Bean
     public ProducerFactory<String, Directories> requestProducerFactory() {
         return new DefaultKafkaProducerFactory<>(producerConfigs2());//producerConfigs()
     }
+
     @Bean
     public KafkaMessageListenerContainer<String, Directories> replyListenerContainer() {
         ContainerProperties containerProperties = new ContainerProperties(replyDirectory);
         return new KafkaMessageListenerContainer<>(replyConsumerFactory(), containerProperties);
     }
+
     @Bean
     public ConsumerFactory<String, Directories> replyConsumerFactory() {
         JsonDeserializer<Directories> jsonDeserializer = new JsonDeserializer<>();

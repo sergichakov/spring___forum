@@ -5,124 +5,27 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-//import se.callista.blog.synch_kafka.request_reply_util.CompletableFutureReplyingKafkaOperations;
-
-//import org.springframework.security.core.context.SecurityContextHolder;
-//import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails;
-import com.forum.jwk.fetch.JwtKeyComponent;
 import com.forum.jwk.service.JwtService;
+import com.forum.kafka.request_reply_util.CompletableFutureReplyingKafkaOperations;
 import com.forum.topic.kafka.event.Topic;
 import com.forum.topic.kafka.event.Topics;
 import com.forum.topic.kafka.event.UserDetailsRole;
 import com.forum.topic.web.hateoas.model.TopicRest;
 import com.forum.topic.web.model.TopicWebDto;
 import com.forum.topic.web.service.TopicWebService;
-import io.jsonwebtoken.security.SignatureException;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.async.DeferredResult;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-
-import org.springframework.hateoas.CollectionModel;
-
-import org.springframework.beans.factory.annotation.Autowired;
-
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.forum.kafka.request_reply_util.CompletableFutureReplyingKafkaOperations;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.async.DeferredResult;
 
 import java.util.Base64;
 import java.util.concurrent.ExecutionException;
 
-
-//@CrossOrigin
-
-//@RestController
-/* class DirectoryRestController222222222222222222222222222222222 {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DirectoryRestController222222222222222222222222222222222.class);
-
-    @Autowired
-    private CompletableFutureReplyingKafkaOperations<String, Directories, Directories> replyingKafkaTemplate;
-
-    @Autowired
-    private ModelMapper modelMapper;
-
-    @Value("${kafka.topic.product.request}")
-    private String requestTopic;
-
-    @Value("${kafka.topic.product.reply}")
-    private String requestReplyTopic;
-    @RequestMapping(value = "/directoryweb", method = RequestMethod.GET ,produces = {MediaType.APPLICATION_JSON_VALUE})
-    public List<Directory> getAllDirectories(){
-		LOGGER.info("Start");
-		DeferredResult<ResponseEntity<CollectionModel<PostRest>>> deferredResult = new DeferredResult<>();
-
-		Directories directoriesRequest = new Directories();
-		directoriesRequest.setOperation(OperationKafka.RETREIVE_ALL); //Directories.RETREIVE_ALL)
-
-		CompletableFuture<Directories> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
-		List <Directory> directories1=new ArrayList<>();
-		completableFuture.thenAccept(directories -> {
-			LOGGER.info("added directories");
-            for(Directory d:directories.getDirectories()){
-                LOGGER.info("received directory"+ d);
-            }
-			directories1.addAll(directories.getDirectories());
-
-		});
-		return directories1;
-    }
-	@RequestMapping(value = "/directoryweb", method = RequestMethod.GET ,produces = {MediaType.APPLICATION_JSON_VALUE})
-    public DeferredResult<ResponseEntity<CollectionModel<PostRest>>> getAllDirectories(){
-
-        LOGGER.info("Start");
-        DeferredResult<ResponseEntity<CollectionModel<PostRest>>> deferredResult = new DeferredResult<>();
-
-        Directories directoriesRequest = new Directories();
-        directoriesRequest.setOperation(Directories.RETREIVE_ALL);
-
-        CompletableFuture<Directories> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
-
-        completableFuture.thenAccept(directories -> {
-
-            List<Directory> directoryList = directories.getDirectories();
-
-            Link links[] = { linkTo(methodOn(PostRestController.class).getAllDirectories()).withSelfRel(),
-                    linkTo(methodOn(PostRestController.class).getAllDirectories()).withRel("getAllDirectories") };
-
-            List<PostRest> list = new ArrayList<PostRest>();
-            for (Directory directory : directoryList) {
-
-                PostRest directoryHateoas = convertEntityToHateoasEntity(directory);
-                //list.add(directoryHateoas.add(directory.getDirectoryId())
-                list.add(directoryHateoas
-                        .add(linkTo(methodOn(PostRestController.class).getDirectory(directoryHateoas.getDirectoryId()))
-                                .withSelfRel()));
-            }
-            list.forEach(item -> LOGGER.debug(item.toString()));
-            CollectionModel<PostRest> result = CollectionModel.of(list, links);
-
-            deferredResult.setResult(new ResponseEntity<CollectionModel<PostRest>>(result, HttpStatus.OK));
-
-        }).exceptionally(ex -> {
-            LOGGER.error(ex.getMessage());
-            return null;
-        });
-
-        //delay();
-
-        LOGGER.info("Ending");
-        return deferredResult;
-    }
-    private PostRest convertEntityToHateoasEntity(Directory directory){
-        return  modelMapper.map(directory,  PostRest.class);
-    }
-}
-*/
 @CrossOrigin
 @RestController
 public class TopicRestController {
@@ -140,15 +43,13 @@ public class TopicRestController {
 
     @Autowired
     private JwtService jwtService;
-    @Autowired
-    private JwtKeyComponent jwtKeyComponent;
 	
     @RequestMapping(value = "/topicsweb", method = RequestMethod.GET ,
             produces = {MediaType.APPLICATION_JSON_VALUE})
 	public DeferredResult<ResponseEntity<CollectionModel<TopicRest>>>
     getAllPosts(@RequestParam(required = false) Integer page,
                 @RequestParam(required = false) Integer numberPerPage,
-                @RequestHeader (name="Authorization",required = false) String token){//// add bearer Authorization "Bearer abcd1234"
+                @RequestHeader (name="Authorization",required = false) String token){
 
     	LOGGER.info("Start topicWeb");
         String userId=getHeaderUserId(token,"userId");
@@ -163,178 +64,46 @@ public class TopicRestController {
             LOGGER.info("headerUserId or UserDetailsRole is null");
         }
 		DeferredResult<ResponseEntity<CollectionModel<TopicRest>>> deferredResult =
-				topicWebService.listTopic(page, numberPerPage, headerUserId, headerUserRole);//new DeferredResult<>();
-/*
-		Directories directoriesRequest = new Directories();
-		directoriesRequest.setPage(page);
-		directoriesRequest.setNumberPerPage(numberPerPage);
-		directoriesRequest.setOperation(OperationKafka.RETREIVE_ALL);  //Directories.RETREIVE_ALL)
-        
-        CompletableFuture<Directories> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
-        
-        completableFuture.thenAccept(directories -> {
-        	
-        	List<Directory> directoryList = directories.getDirectories();
-        	
-			Link links[] = { linkTo(methodOn(PostRestController.class).getAllDirectories(page,numberPerPage)).withSelfRel(),
-					linkTo(methodOn(PostRestController.class).getAllDirectories(page,numberPerPage)).withRel("getAllDirectories") };
+				topicWebService.listTopic(page, numberPerPage, headerUserId, headerUserRole);
 
-			List<PostRest> list = new ArrayList<PostRest>();
-			for (Directory directory : directoryList) {
-				PostRest directoryHateoas = convertEntityToHateoasEntity(directory);
-				list.add(directoryHateoas
-						.add(linkTo(methodOn(PostRestController.class).getDirectory(directoryHateoas.getDirectoryId()))
-								.withSelfRel()));
-
-			}
-			list.forEach(item -> LOGGER.debug(item.toString()));
-			CollectionModel<PostRest> result = CollectionModel.of(list, links);
-			
-			deferredResult.setResult(new ResponseEntity<CollectionModel<PostRest>>(result, HttpStatus.OK));
-        	
-        }).exceptionally(ex -> {
-        	LOGGER.error(ex.getMessage());
-        	return null;
-        });
-        
-        //delay();
-        */
         LOGGER.info("Ending");
         return deferredResult;
     }
-    
-    private void delay() {
-        
-        long secondsToSleep = 6;
-        LOGGER.debug(Thread.currentThread().toString());
-        LOGGER.debug("Starting to Sleep Seconds : " + secondsToSleep);
 
-        try{
-            Thread.sleep(1000 * secondsToSleep);
-        }
-        catch(Exception e) {
-            LOGGER.error("Error : " + e);
-        }
-        LOGGER.debug("Awakening from Sleep...");
- 		
-    }
-
-  //------------------- Retreive a Product --------------------------------------------------------
     @RequestMapping(value = "/topicsweb/{id}", method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public DeferredResult<ResponseEntity<TopicRest>> getTopic(
             @PathVariable("id") Long id,
-            @RequestHeader (name="Authorization", required = false) String token) {//String id
+            @RequestHeader (name="Authorization", required = false) String token) {
     	
     	LOGGER.info("Start");
     	LOGGER.debug("Fetching Product with id: {}", id);
 		LOGGER.info("Thread : " + Thread.currentThread());
-        //Long headerUserId = getHeaderUserId(token);
         Long headerUserId= Long.parseLong(getHeaderUserId(token,"userId"));
         UserDetailsRole headerUserRole= UserDetailsRole.valueOf(getHeaderUserId(token,"role"));
-        //Long headerUserId=headers.keySet().iterator().next();
-//        serDetailsRole userDetailsRole = headers.get(headerUserId);
+
 		DeferredResult<ResponseEntity<TopicRest>> deferredResult
                 = topicWebService.getTopic(id, headerUserId, headerUserRole);
 
-/*		Directories directoriesRequest = new Directories();
-		directoriesRequest.setOperation(OperationKafka.RETREIVE_DETAILS);//Directories.RETREIVE_DETAILS
-		Directory directory = new Directory();
-		directory.setDirectoryId(id);
-		List<Directory> directoryRequestList = new ArrayList<>();
-		directoryRequestList.add(directory);
-		directoriesRequest.setDirectories(directoryRequestList);
-		
-        CompletableFuture<Directories> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
-        
-        completableFuture.thenAccept(directories -> {
-        	
-        	List<Directory> directoryList = directories.getDirectories();
-        	Directory directoryRetreived = null;
-        	Long directoryId = null; // String directoryId
-
-            if (directoryList.iterator().hasNext()) {
-            	directoryRetreived = directoryList.iterator().next();
-            	directoryId = directoryRetreived.getDirectoryId();
-            	LOGGER.debug("Product with productId : {} retreived from Backend Microservice", directoryId);
-
-				PostRest directoryHateoas = convertEntityToHateoasEntity(directoryRetreived);
-				directoryHateoas.add(linkTo(methodOn(PostRestController.class).getDirectory(directoryHateoas.getDirectoryId())).withSelfRel());
-
-            	deferredResult.setResult(new ResponseEntity<PostRest>(directoryHateoas, HttpStatus.OK));
-
-            }
-            else {
-            	LOGGER.debug("Product with productId : {} not retreived from Backend Microservice", id);
-            	deferredResult.setResult(new ResponseEntity<PostRest>(HttpStatus.NOT_FOUND));
-            }
-           
-        }).exceptionally(ex -> {
-        	LOGGER.error(ex.getMessage());
-        	return null;
-        });
-*/
         LOGGER.info("Ending");
         return deferredResult;
     }
 
-
-    //------------------- Create a Product --------------------------------------------------------
     @RequestMapping(value = "/topicsweb", method = RequestMethod.POST,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public DeferredResult<ResponseEntity<TopicRest>> addPost(@RequestBody TopicWebDto postRest)
-            throws ExecutionException, InterruptedException {//Directory directory
+            throws ExecutionException, InterruptedException {
     	
     	LOGGER.info("Start");
-    	LOGGER.debug("Creating Product with code: {}");//, directory.getCode());
+    	LOGGER.debug("Creating Product with code: {}");
     	
 		LOGGER.info("Thread : " + Thread.currentThread());
 
 		DeferredResult<ResponseEntity<TopicRest>> deferredResult = topicWebService.createTopic(postRest);
-/*		DeferredResult<ResponseEntity<PostRest>> deferredResult = new DeferredResult<>();
-
-		Directories directoriesRequest = new Directories();
-		directoriesRequest.setOperation(OperationKafka.CREATE);//Directories.CREATE
-		List<Directory> directoryRequestList = new ArrayList<>();
-		directoryRequestList.add(directory);
-		directoriesRequest.setDirectories(directoryRequestList);
-        
-        CompletableFuture<Directories> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
-        
-        completableFuture.thenAccept(directories -> {
-        	
-        	List<Directory> directoryList = directories.getDirectories();
-        	Directory directoryRetreived = null;
-        	Long directoryId = null; //String directoryId
-
-            if (directoryList.iterator().hasNext()) {
-            	directoryRetreived = directoryList.iterator().next();
-            	directoryId = directoryRetreived.getDirectoryId();
-            	LOGGER.debug("Product with productId : {} created by Backend Microservice", directoryId);
-
-				PostRest directoryHateoas = convertEntityToHateoasEntity(directoryRetreived);
-				directoryHateoas.add(linkTo(methodOn(PostRestController.class).getDirectory(directoryHateoas.getDirectoryId())).withSelfRel());
-            	deferredResult.setResult(new ResponseEntity<PostRest>(directoryHateoas, HttpStatus.OK));
-
-            }
-            else {
-            	LOGGER.debug("Product with code : {} not created by Backend Microservice");//, directory.getCode());
-				deferredResult.setResult(new ResponseEntity<PostRest>(HttpStatus.CONFLICT));
-            }
-           
-        }).exceptionally(ex -> {
-        	LOGGER.error(ex.getMessage());
-        	return null;
-        });
-
-
- */
         LOGGER.info("Ending");
         return deferredResult;
     }
 
-
-    //------------------- Update a Product --------------------------------------------------------
     @RequestMapping(value = "/topicsweb/{postId}", method = RequestMethod.PUT,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public DeferredResult<ResponseEntity<TopicRest>>
@@ -349,57 +118,14 @@ public class TopicRestController {
         Long headerUserId= Long.parseLong(getHeaderUserId(token,"userId"));
         UserDetailsRole headerUserRole= UserDetailsRole.valueOf(getHeaderUserId(token,"role"));
         String token2 = null;
-//        var authentication = SecurityContextHolder.getContext().getAuthentication();
-//        if (authentication != null) {
-//            token2 = ((OAuth2AuthenticationDetails) authentication.getDetails()).getTokenValue();
-//        }
 
         LOGGER.info("token2 = ", token2);
 
 		DeferredResult<ResponseEntity<TopicRest>> deferredResult = topicWebService.updatePost(id,
                 post, headerUserId, headerUserRole);
-/*
-		Directories directoriesRequest = new Directories();
-		directoriesRequest.setOperation(OperationKafka.UPDATE);//Directories.UPDATE
-		List<Directory> directoryRequestList = new ArrayList<>();
-		directoryRequestList.add(directory);
-		directoriesRequest.setDirectories(directoryRequestList);
-        
-        CompletableFuture<Directories> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
-        
-        completableFuture.thenAccept(directories -> {
-        	
-        	List<Directory> directoryList = directories.getDirectories();
-        	Directory directoryRetreived = null;
-        	Long directoryId = null; //String directoryId
-
-            if (directoryList.iterator().hasNext()) {
-            	directoryRetreived = directoryList.iterator().next();
-            	directoryId = directoryRetreived.getDirectoryId();
-            	LOGGER.debug("Product with productId : {} updated by Backend Microservice", directoryId);
-
-				PostRest directoryHateoas = convertEntityToHateoasEntity(directoryRetreived);
-				directoryHateoas.add(linkTo(methodOn(PostRestController.class).getDirectory(directoryHateoas.getDirectoryId())).withSelfRel());
-            	deferredResult.setResult(new ResponseEntity<PostRest>(directoryHateoas, HttpStatus.OK));
-
-            }
-            else {
-            	LOGGER.debug("Product with code : {} not updated by Backend Microservice", id);
-				deferredResult.setResult(new ResponseEntity<PostRest>(HttpStatus.NOT_FOUND));
-            }
-
-
-        }).exceptionally(ex -> {
-        	LOGGER.error(ex.getMessage());
-        	return null;
-        });
-*/
         LOGGER.info("Ending");
         return deferredResult;
     }
-
-
-    //------------------- Delete a Product --------------------------------------------------------
 
     @RequestMapping(value = "/topicsweb/{postId}", method = RequestMethod.DELETE,
             produces = MediaType.APPLICATION_JSON_VALUE)
@@ -414,43 +140,6 @@ public class TopicRestController {
 		LOGGER.info("Thread : " + Thread.currentThread());
 		DeferredResult<ResponseEntity<Topic>> deferredResult = topicWebService.deletePost(id, headerUserId, headerUserRole);
 
-/*		Directories directoriesRequest = new Directories();
-		directoriesRequest.setOperation(OperationKafka.DELETE);//Directories.DELETE
-		List<Directory> directoryRequestList = new ArrayList<>();
-		Directory directoryToDelete = new Directory();
-		directoryToDelete.setDirectoryId(id);
-		directoryToDelete.setCreationDate(new Timestamp(System.currentTimeMillis()));
-		//directoryToDelete.setOrder(0L);
-		directoryToDelete.setOrder(null);
-		directoryToDelete.setSubDirId(null);
-		directoryToDelete.setTopicId(null);
-//		directoryToDelete.setName("");
-//		directoryToDelete.setCode("");
-//		directoryToDelete.setTitle("");
-//		directoryToDelete.setPrice(0D);
-		directoryRequestList.add(directoryToDelete);
-		directoriesRequest.setDirectories(directoryRequestList);
-        
-        CompletableFuture<Directories> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
-        
-        completableFuture.thenAccept(directories -> {
-
-            if (directories.getOperation().equals(OperationKafka.SUCCESS)) {//contentEquals
-            	LOGGER.debug("Product with productId : {} deleted by Backend Microservice", id);
-            	deferredResult.setResult(new ResponseEntity<Directory>(HttpStatus.NO_CONTENT));
-
-            }
-            else {
-            	LOGGER.debug("Product with id : {} suspected not deleted by Backend Microservice", id);
-            	deferredResult.setResult(new ResponseEntity<Directory>(HttpStatus.NOT_FOUND));
-            }
-           
-        }).exceptionally(ex -> {
-        	LOGGER.error(ex.getMessage());
-        	return null;
-        });
-        */
-
         LOGGER.info("Ending");
         return deferredResult;
     }
@@ -461,26 +150,6 @@ public class TopicRestController {
     private String getHeaderUserId(String token, String headerName){
 
         String jwtToken = token.split("Bearer ")[1];
-//        Object wasReturnedAnything= (Object)(jwtService.extractAllClaims(token));
-//        try {
-//            //if (null==jwtService.extractAllClaims(jwtToken)){
-//            jwtService.extractAllClaims(jwtToken);
-//        }catch(SignatureException esignature){
-//
-//            jwtKeyComponent.fetch(); // it is useful
-//            LOGGER.debug("get HeaderUser need to be propagate to other - Posts");
-//            try {
-//                System.out.println("Oper getHeaderUserId= jwks "+jwtKeyComponent.get());
-//// it all just to new JWK key
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//                throw new RuntimeException(e);
-//            } catch (ExecutionException e) {
-//                e.printStackTrace();
-//                throw new RuntimeException(e);
-//            }///////////////maybe this try-catch is useless
-//
-//        }
         if(null==token || token.isEmpty() || !jwtService.isTokenValid(jwtToken)){
             return null;
         }
@@ -499,9 +168,9 @@ public class TopicRestController {
             LOGGER.debug("JsonProcessingException has been thrown. Trouble in JWT payload");
             e.printStackTrace();
         }
-//        Long headerUserId = Long.parseLong(jsonNode.get("userId").asText());
+
         String header = jsonNode.get(headerName).asText();
-//        UserDetailsRole userDetailsRole=UserDetailsRole.valueOf("role");
+
         LOGGER.debug("now i know userId {}", header);
         if (null==header || header.isEmpty()){
             LOGGER.debug("headerUserId is empty");

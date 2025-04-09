@@ -12,5 +12,4 @@ import java.util.UUID;
 @RepositoryRestResource(collectionResourceRel = "productdata", path = "productdata")
 public interface PostPagingRepository extends PagingAndSortingRepository<PostEntity, UUID> { // было Long
     public List<PostEntity> findByPostId(@Param("topicId") UUID postId, Pageable pageable);
-    //public List<PostEntity> f
 }

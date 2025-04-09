@@ -6,11 +6,11 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.5</version>
+        <version>3.0.4</version>
         <relativePath/> <!-- lookup parent from repository 2.7.5 -->
     </parent>
 
-    <groupId>com.example</groupId>
+    <groupId>com.forum</groupId>
     <artifactId>authorization-server</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>authorization-server</name>
@@ -18,7 +18,8 @@
 
     <properties>
         <java.version>17</java.version>
-        <spring-auth-server.version>0.3.1</spring-auth-server.version><!-- 0.3.1 -->
+        <spring-cloud.version>2022.0.1</spring-cloud.version>
+        <spring-auth-server.version>1.0.0</spring-auth-server.version><!-- 0.3.1 -->
     </properties>
 
     <dependencies>
@@ -36,10 +37,10 @@
             <version>${spring-auth-server.version}</version>
         </dependency>
 
-        <dependency>
+        <!--     <dependency>  may be this lines is useless - - - - - - - - - - - - - - - - - - - - - -
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-oauth2-resource-server</artifactId>
-        </dependency>
+        </dependency>-->
 
 <!--
     SecurityFilterChain resourceServerSecurityFilterChain(
@@ -207,7 +208,7 @@ spring:
         <dependency>
         <groupId>org.hibernate</groupId>
         <artifactId>hibernate-core</artifactId>
-            <!--   <version>6.5.3.Final</version>  before it was empty version -->
+               <version>6.5.3.Final</version> <!-- before it was empty version -->
         </dependency>
         <!--     <dependency>
                 <groupId>io.jsonwebtoken</groupId>
@@ -233,7 +234,23 @@ spring:
             <version>0.12.6</version>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+            <version>4.0.4</version>
+        </dependency>
     </dependencies>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <profiles>
         <profile>
             <id>prod</id>

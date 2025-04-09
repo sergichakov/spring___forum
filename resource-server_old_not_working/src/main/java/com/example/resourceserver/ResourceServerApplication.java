@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.http.HttpStatus;
 
 //@TypeHints({
-//        @TypeHint(types = HttpStatus.class)
+
 //})
 @SpringBootApplication
 public class ResourceServerApplication {

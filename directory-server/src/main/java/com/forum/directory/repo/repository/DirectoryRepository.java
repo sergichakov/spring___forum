@@ -10,9 +10,8 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 import com.forum.directory.repo.model.DirectoryThemeEntity;
 
-
 @RepositoryRestResource(collectionResourceRel = "productdata", path = "productdata")
 public interface DirectoryRepository extends CrudRepository<DirectoryThemeEntity, Long> {
-	public Long findTopByTopicId (@Param("topicId") Long topicId);
-	public List<DirectoryThemeEntity> findByName (@Param("name") String  name);
+    public Long findTopByTopicId(@Param("topicId") Long topicId);
+
 }

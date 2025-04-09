@@ -1,2 +1,0 @@
-jwt-key:
-  link: "http://authorization-server:9000/jwks"

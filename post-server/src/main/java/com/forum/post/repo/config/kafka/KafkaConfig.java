@@ -31,80 +31,81 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 @EnableKafka
 public class KafkaConfig {
 
-	  @Value("${spring.kafka.bootstrap-servers}")
-	  private String bootstrapServers;
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
 
-	  @Value("${spring.kafka.consumer.group-id}")
-	  private String groupId;
+    @Value("${spring.kafka.consumer.group-id}")
+    private String groupId;
 
-	  @Value("${kafka.topic.product.request}")
-	  private String requestTopic;
+    @Value("${kafka.topic.product.request}")
+    private String requestTopic;
 
-	  @Value("${product.topic.request.numPartitions}")
-	  private int numPartitions;
+    @Value("${product.topic.request.numPartitions}")
+    private int numPartitions;
 
-	  @Value("${kafka.request-reply.timeout-ms}")
-	  private Long replyTimeout;
+    @Value("${kafka.request-reply.timeout-ms}")
+    private Long replyTimeout;
 
-	  @Bean
-	  public Map<String, Object> consumerConfigs() {
-	    Map<String, Object> props = new HashMap<>();
-	    props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-	    props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-	    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-	    props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-	    return props;
-	  }
+    @Bean
+    public Map<String, Object> consumerConfigs() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        return props;
+    }
 
-	  @Bean
-	  public Map<String, Object> producerConfigs() {
-	    Map<String, Object> props = new HashMap<>();
-	    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-	    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-	    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-	    return props;
-	  }
+    @Bean
+    public Map<String, Object> producerConfigs() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        return props;
+    }
 
-	  @Bean
-	  public ConsumerFactory<String, Posts> requestConsumerFactory() {
-		  
-		  JsonDeserializer<Posts> jsonDeserializer = new JsonDeserializer<>();
-		  jsonDeserializer.addTrustedPackages(Posts.class.getPackage().getName());
-		  return new DefaultKafkaConsumerFactory<>(consumerConfigs(), new StringDeserializer(),
-		        jsonDeserializer);
-		  
-	  }
+    @Bean
+    public ConsumerFactory<String, Posts> requestConsumerFactory() {
 
-	  @Bean
-	  public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, Posts>> requestReplyListenerContainerFactory() {
-	    ConcurrentKafkaListenerContainerFactory<String, Posts> factory =
-	        new ConcurrentKafkaListenerContainerFactory<>();
-	    factory.setConsumerFactory(requestConsumerFactory());
-	    factory.setReplyTemplate(replyTemplate());
-	    return factory;
-	  }
-	  
-	  @Bean
-	  public ProducerFactory<String, Posts> replyProducerFactory() {
-	    return new DefaultKafkaProducerFactory<>(producerConfigs());
-	  }
+        JsonDeserializer<Posts> jsonDeserializer = new JsonDeserializer<>();
+        jsonDeserializer.addTrustedPackages(Posts.class.getPackage().getName());
+        return new DefaultKafkaConsumerFactory<>(consumerConfigs(), new StringDeserializer(),
+                jsonDeserializer);
 
-	  @Bean
-	  public KafkaTemplate<String, Posts> replyTemplate() {
-	    return new KafkaTemplate<>(replyProducerFactory());
-	  }
+    }
 
-	  @Bean
-	  public KafkaAdmin admin() {
-	    Map<String, Object> configs = new HashMap<>();
-	    configs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-	    return new KafkaAdmin(configs);
-	  }
+    @Bean
+    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, Posts>>
+                    requestReplyListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, Posts> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(requestConsumerFactory());
+        factory.setReplyTemplate(replyTemplate());
+        return factory;
+    }
 
-	  @Bean
-	  public NewTopic requestTopic() {
-	    Map<String, String> configs = new HashMap<>();
-	    configs.put("retention.ms", replyTimeout.toString());
-	    return new NewTopic(requestTopic, numPartitions, (short) 1).configs(configs);
-	  }
+    @Bean
+    public ProducerFactory<String, Posts> replyProducerFactory() {
+        return new DefaultKafkaProducerFactory<>(producerConfigs());
+    }
+
+    @Bean
+    public KafkaTemplate<String, Posts> replyTemplate() {
+        return new KafkaTemplate<>(replyProducerFactory());
+    }
+
+    @Bean
+    public KafkaAdmin admin() {
+        Map<String, Object> configs = new HashMap<>();
+        configs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        return new KafkaAdmin(configs);
+    }
+
+    @Bean
+    public NewTopic requestTopic() {
+        Map<String, String> configs = new HashMap<>();
+        configs.put("retention.ms", replyTimeout.toString());
+        return new NewTopic(requestTopic, numPartitions, (short) 1).configs(configs);
+    }
 }

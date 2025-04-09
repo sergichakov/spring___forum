@@ -1,11 +1,11 @@
 #Post Server
 # prod
 datasource:
-  url: jdbc:postgresql://postgres:5432/postsdb # ##jdbc:postgresql://${DB_SERVER}/${POSTGRES_DB}
-  username: forum # ##${POSTGRES_USER}
-  password: ForumPassword # ##${POSTGRES_PASSWORD}
+  url: jdbc:postgresql://postgres:5432/postsdb
+  username: forum
+  password: ForumPassword
   dialect: org.hibernate.dialect.PostgreSQLDialect
 hibernate:
-  ddl-auto: update    # create
+  ddl-auto: update
 kafka:
   bootstrap-servers: kafka:9092

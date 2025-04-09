@@ -16,14 +16,9 @@ public class DirectoryWebSecurityConfig {
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(CsrfConfigurer::disable).cors(CorsConfigurer::disable)
                 .authorizeHttpRequests(authorizeRequests ->{
-//                    authorizeRequests
-//                            .anyRequest()
-//                            .anonymous();
                     authorizeRequests.anyRequest().permitAll();
                 });
-//                .cors().disable().csrf().disable();
-        //.formLogin(withDefaults());//.cors().disable()   //// I added it after
-        ////.csrf().disable().headers().frameOptions().disable();
+
         return http.build();
     }
 }

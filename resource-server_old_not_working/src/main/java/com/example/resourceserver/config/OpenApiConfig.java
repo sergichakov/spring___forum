@@ -43,7 +43,7 @@ import org.springframework.context.annotation.Configuration;
                 @Server(url = "${app.host-url}")
         },
         security = {
-//              https://stackoverflow.com/questions/61477056/why-is-the-authorization-header-missing-in-requests-sent-from-swagger-ui
+
                 @SecurityRequirement(name = "JWT"),
                 @SecurityRequirement(name = "basicAuth")
         }//"basicAuth")

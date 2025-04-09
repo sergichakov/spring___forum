@@ -1,7 +1,6 @@
 
 package com.forum.post.kafka.event;
 
-//import io.swagger.annotations.ApiModelProperty;
 
 import lombok.*;
 
@@ -24,19 +23,4 @@ public class Post {
 	private Long userCreatorId;
 	private Long userOwnerId;
 	private Long numberOfLikes;
-	//@ApiModelProperty(position = 1)
-/*	private Long directoryId; // String directoryId
-
-
-	private Long order;
-
-	private Long subDirId;
-
-	private Timestamp creationDate;
-
-    private	String topicId;
-
-	private String name;
-
- */
 }
