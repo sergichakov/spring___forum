@@ -1,6 +1,6 @@
 #Topic Web Dev
 kafka:
-  bootstrap-servers: localhost:9092
+  bootstrap-servers: localhost:29092 # but was localhost:9092
 jwt-key:
   link: "http://localhost:9000/jwks"
 

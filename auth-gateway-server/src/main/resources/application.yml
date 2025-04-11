@@ -80,6 +80,7 @@ logging:
     org.springframework.security: trace
     org.springframework.cloud.gateway.route.RouteDefinitionRouteLocator: INFO
     org.springframework.cloud.gateway: trace
+    org.springframework.security.oauth2: trace
 eureka:
   client:
     serviceUrl:

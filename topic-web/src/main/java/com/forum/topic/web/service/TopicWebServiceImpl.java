@@ -53,6 +53,8 @@ public class TopicWebServiceImpl implements TopicWebService {
         topicsRequest.setPage(page);
         topicsRequest.setNumberPerPage(numberPerPage);
         topicsRequest.setOperation(OperationKafka.RETREIVE_ALL);
+        System.out.println("topics request"+topicsRequest);
+
 
         CompletableFuture<Topics> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, topicsRequest);
 
