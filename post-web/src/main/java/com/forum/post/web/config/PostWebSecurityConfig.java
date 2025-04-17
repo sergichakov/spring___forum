@@ -17,7 +17,7 @@ public class PostWebSecurityConfig {
         http.csrf(CsrfConfigurer::disable).cors(CorsConfigurer::disable)
                 .authorizeHttpRequests(authorizeRequests ->{
                     authorizeRequests.anyRequest().permitAll();
-                }).oauth2ResourceServer().jwt();
+                });//.oauth2ResourceServer().jwt();
 
         return http.build();
     }

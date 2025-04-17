@@ -30,8 +30,15 @@
 			<groupId>se.callista.blog.synch_kafka</groupId>
 			<artifactId>kafka-request-reply-util</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
-		</dependency> 
-
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-cache</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-rest</artifactId>
@@ -71,11 +78,11 @@
 			</exclusions>
 		</dependency>
 <!-- -->
-		<dependency>
-			<groupId>org.liquibase</groupId>
-			<artifactId>liquibase-core</artifactId>
-			<version>4.25.1</version>
-		</dependency><!--     -->
+				<dependency>
+                    <groupId>org.liquibase</groupId>
+                    <artifactId>liquibase-core</artifactId>
+                    <version>4.25.1</version>
+                </dependency> <!--    -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>

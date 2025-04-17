@@ -1,0 +1,9 @@
+#Post Web
+# dev
+kafka:
+  bootstrap-servers: localhost:9092
+jwt-key:
+  link: "http://localhost:9000/jwks"
+
+eureka:
+  defaultZoneUrl: http://u:p@localhost:8761/eureka/

@@ -1,0 +1,3 @@
+com/forum/directory/web/DirectoryWebServiceIT.class
+com/forum/directory/web/WebKafkaListener.class
+com/forum/directory/web/WebControllerKafkaConfiguration.class

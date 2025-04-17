@@ -1,0 +1,9 @@
+/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/post-web/src/main/java/com/forum/post/web/ForumPostWebMicroserviceApplication.java
+/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/post-web/src/main/java/com/forum/post/web/config/OpenApiConfig.java
+/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/post-web/src/main/java/com/forum/post/web/config/PostWebSecurityConfig.java
+/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/post-web/src/main/java/com/forum/post/web/hateoas/model/PostRest.java
+/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/post-web/src/main/java/com/forum/post/web/controller/PostRestController.java
+/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/post-web/src/main/java/com/forum/post/web/service/PostWebService.java
+/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/post-web/src/main/java/com/forum/post/web/config/PostKafkaConfig.java
+/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/post-web/src/main/java/com/forum/post/web/service/PostWebServiceImpl.java
+/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/post-web/src/main/java/com/forum/post/web/model/PostWebDto.java

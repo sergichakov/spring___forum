@@ -1,0 +1,4 @@
+com/forum/eureka/eurekaserver/config/UserDetailsConfig.class
+com/forum/eureka/eurekaserver/controller/CustomErrorController.class
+com/forum/eureka/eurekaserver/EurekaServerApplication.class
+com/forum/eureka/eurekaserver/config/SecurityConfig.class

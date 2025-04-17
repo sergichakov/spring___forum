@@ -1,0 +1,9 @@
+com/forum/topic/web/model/TopicWebDto.class
+com/forum/topic/web/hateoas/model/TopicRest.class
+com/forum/topic/web/ForumTopicWebMicroserviceApplication.class
+com/forum/topic/web/controller/TopicRestController.class
+com/forum/topic/web/service/TopicWebService.class
+com/forum/topic/web/config/TopicWebSecurityConfig.class
+com/forum/topic/web/config/OpenApiConfig.class
+com/forum/topic/web/config/KafkaConfig.class
+com/forum/topic/web/service/TopicWebServiceImpl.class

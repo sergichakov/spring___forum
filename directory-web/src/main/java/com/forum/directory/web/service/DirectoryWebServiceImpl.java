@@ -3,11 +3,10 @@ package com.forum.directory.web.service;
 import com.forum.directory.kafka.event.Directories;
 import com.forum.directory.kafka.event.Directory;
 import com.forum.directory.kafka.event.OperationDirectoryKafka;
-import com.forum.directory.web.controller.DirectoryRestController;
+import com.forum.directory.web.DirectoryRestController;
 import com.forum.directory.web.hateoas.model.DirectoryRest;
 import com.forum.directory.web.model.DirectoryWebDto;
 import com.forum.kafka.request_reply_util.CompletableFutureReplyingKafkaOperations;
-import lombok.NoArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +17,7 @@ import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.async.DeferredResult;
 
 import java.util.ArrayList;
@@ -28,19 +28,30 @@ import java.util.concurrent.ExecutionException;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
-@Service
-@NoArgsConstructor
+@Service("directoryWebServiceImpl")
+@Transactional // it may not work No qualifying bean of type
 public class DirectoryWebServiceImpl implements DirectoryWebService {
     private final Logger LOGGER = LoggerFactory.getLogger(DirectoryWebServiceImpl.class);
-    @Autowired
+//    @Autowired
     private CompletableFutureReplyingKafkaOperations<String, Directories, Directories> replyingKafkaTemplate;
-    @Autowired
+//    @Autowired
     private ModelMapper modelMapper;
     @Value("${kafka.topic.product.request}")
     private String requestTopic;
 
     @Value("${kafka.topic.product.reply}")
     private String requestReplyTopic;
+    @Autowired
+    public DirectoryWebServiceImpl(CompletableFutureReplyingKafkaOperations<String, Directories, Directories> replyingKafkaTemplate,
+                                   ModelMapper modelMapper){//, String requestTopic, String requestReplyTopic) {
+        this.replyingKafkaTemplate = replyingKafkaTemplate;
+        this.modelMapper = modelMapper;
+        //this.requestTopic = requestTopic;
+        //this.requestReplyTopic = requestReplyTopic;
+    }
+
+    public DirectoryWebServiceImpl() {
+    }
 
     public DeferredResult<ResponseEntity<CollectionModel<DirectoryRest>>> listDirectory(Integer page, Integer numberPerPage) {
         DeferredResult<ResponseEntity<CollectionModel<DirectoryRest>>> deferredResult = new DeferredResult<>();
@@ -125,12 +136,13 @@ public class DirectoryWebServiceImpl implements DirectoryWebService {
     public DeferredResult<ResponseEntity<DirectoryRest>> createDirectory(DirectoryWebDto createDirectoryWebDto) throws ExecutionException, InterruptedException {
         DeferredResult<ResponseEntity<DirectoryRest>> deferredResult = new DeferredResult<>();
 
-        Directory directoryRest = modelMapper.map(createDirectoryWebDto, Directory.class);
-        directoryRest.setDirectoryId(null);
+        Directory directoryKafka = modelMapper.map(createDirectoryWebDto, Directory.class);
+        directoryKafka.setDirectoryId(null);
+        directoryKafka.setCreationDate(null);    //// it was added
         Directories directoriesRequest = new Directories();
         directoriesRequest.setOperation(OperationDirectoryKafka.CREATE);
         List<Directory> directoryRequestList = new ArrayList<>();
-        directoryRequestList.add(directoryRest);
+        directoryRequestList.add(directoryKafka);
         directoriesRequest.setDirectories(directoryRequestList);
 
         CompletableFuture<Directories> completableFuture = replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
@@ -168,6 +180,7 @@ public class DirectoryWebServiceImpl implements DirectoryWebService {
         DeferredResult<ResponseEntity<DirectoryRest>> deferredResult = new DeferredResult<>();
         Directory directory = modelMapper.map(directoryWebDto, Directory.class);
         directory.setDirectoryId(id);
+        directory.setCreationDate(null);                //// it was added
         Directories directoriesRequest = new Directories();
         directoriesRequest.setOperation(OperationDirectoryKafka.UPDATE);
         List<Directory> directoryRequestList = new ArrayList<>();
@@ -241,11 +254,16 @@ public class DirectoryWebServiceImpl implements DirectoryWebService {
         return modelMapper.map(directory, DirectoryRest.class);
     }
 
-    public DeferredResult<ResponseEntity<Long>> getMaxTopicId() {
+    public DeferredResult<ResponseEntity<Long>> getMaxTopicId(){//Long topicId) {
         DeferredResult<ResponseEntity<Long>> deferredResult = new DeferredResult<>();
 
         Directories directoriesRequest = new Directories();
         directoriesRequest.setOperation(OperationDirectoryKafka.GET_MAX_TOPIC_ID);//Directories.DELETE
+        //Directory directory=new Directory();
+        //directory.setTopicId(topicId);
+        //List<Directory> directoryRequestList = new ArrayList<>();
+        //directoryRequestList.add(directory);
+        //directoriesRequest.setDirectories(directoryRequestList);
 
         CompletableFuture<Directories> completableFuture = replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
 

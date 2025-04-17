@@ -49,7 +49,7 @@ import static org.mockito.ArgumentMatchers.any;
 @EmbeddedKafka(partitions = 1, count = 1, controlledShutdown = true)
 //, kraft=true)////,brokerProperties = { "listeners=PLAINTEXT://localhost:9092", "port=9092" })
 
-@SpringBootTest(properties = "spring.kafka.producer.bootstrap-servers-${spring.embedded.kafka.brokers}")
+@SpringBootTest(properties = {"spring.kafka.producer.bootstrap-servers-${spring.embedded.kafka.brokers}", "eureka.client.enabled=false"})
 public class PostWebControllerIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(PostWebControllerIntegrationTest.class);
 

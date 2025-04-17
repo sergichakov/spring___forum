@@ -7,6 +7,7 @@ import com.forum.topic.kafka.event.Topic;
 import com.forum.topic.kafka.event.Topics;
 import com.forum.topic.kafka.event.UserDetailsRole;
 import com.forum.topic.web.model.TopicWebDto;
+import com.forum.topic.web.service.TopicWebService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.impl.DefaultClaims;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -62,7 +63,7 @@ public class TopicWebControllerIntegrationTest {
     @Autowired
     private EmbeddedKafkaBroker embeddedKafkaBroker;
     @Autowired
-    private com.forum.topic.web.service.TopicWebService productService;
+    private TopicWebService productService;
     private KafkaMessageListenerContainer<String, Topics> container;
     private BlockingQueue<ConsumerRecord<String, Topics>> records;
     @MockBean
@@ -102,7 +103,7 @@ public class TopicWebControllerIntegrationTest {
         createProductDto.setUserOwnerId(111L);
 
         //act block
-        productService.createTopic(createProductDto);
+        productService.createTopic(createProductDto, createProductDto.getUserOwnerId());
 
         //assert block
         ConsumerRecord<String, Topics> message = records.poll(3000, TimeUnit.MILLISECONDS);
@@ -121,7 +122,7 @@ public class TopicWebControllerIntegrationTest {
         String title = "Samsung";
 
         //act block
-        productService.listTopic(1, 1000, 1L, UserDetailsRole.ROLE_USER);
+        productService.listTopic(1, 1000, 1L, UserDetailsRole.ROLE_USER, null );
 
         //assert block
         ConsumerRecord<String, Topics> message = records.poll(3000, TimeUnit.MILLISECONDS);
@@ -187,8 +188,8 @@ public class TopicWebControllerIntegrationTest {
         Topics postDeleteEvent = message.value();
         assertEquals(OperationKafka.DELETE, postDeleteEvent.getOperation());
         assertEquals(1L, postDeleteEvent.getHeaderUserId());
-        assertEquals("ffb71828-b077-4a5d-8749-ee394dfa81e0",
-                postDeleteEvent.getTopics().get(0).getPostId().toString());
+        assertEquals(200L,
+                postDeleteEvent.getTopics().get(0).getPostId());
     }
 
     private Map<String, Object> getConsumerProperties() {

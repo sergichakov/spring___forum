@@ -1,0 +1,43 @@
+server:
+  application:
+    name: product-web
+  port: 18081
+spring:
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+  kafka:
+    bootstrap-servers: ${kafka.bootstrap-servers}
+    consumer:
+      auto-offset-reset: earliest
+      group-id: product-web
+kafka:
+  topic:
+    product:
+      request: directory-req-topic
+      reply: directory-req-reply-topic
+  request-reply:
+    timeout-ms: 10000
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${eureka.defaultZoneUrl} # http://localhost:8761/eureka/
+    initialInstanceInfoReplicationIntervalSeconds: 5
+    registryFetchIntervalSeconds: 5
+  instance:
+    leaseRenewalIntervalInSeconds: 5
+    leaseExpirationDurationInSeconds: 5
+product:
+  topic:
+    request:
+      numPartitions: 2
+logging:
+  level:
+    root: info
+springdoc:
+  api-docs:
+    path: /directoriesweb/v3/api-docs
+  swagger-ui:
+    path: /directoriesweb/
+    url: /directoriesweb/v3/api-docs
+app:
+  host-url: /

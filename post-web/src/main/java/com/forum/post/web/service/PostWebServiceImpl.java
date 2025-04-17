@@ -29,6 +29,7 @@ import java.util.concurrent.ExecutionException;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 @Service
 @NoArgsConstructor
 public class PostWebServiceImpl implements PostWebService {
@@ -43,22 +44,30 @@ public class PostWebServiceImpl implements PostWebService {
     @Value("${kafka.topic.product.reply}")
     private String requestReplyTopic;
 
-    public DeferredResult<ResponseEntity<CollectionModel<PostRest>>> listPost(Integer page, Integer numberPerPage){
+    public DeferredResult<ResponseEntity<CollectionModel<PostRest>>> listPost(Integer page, Integer numberPerPage) {
         DeferredResult<ResponseEntity<CollectionModel<PostRest>>> deferredResult = new DeferredResult<>();
 
         Posts postsRequest = new Posts();
+        if (page == null) {
+            page = 0;
+        }
+        if (numberPerPage == null) {
+            numberPerPage = 1000;
+        }
+        final Integer pageToSend = page;
+        final Integer numberPerPageToSend = numberPerPage;
         postsRequest.setPage(page);
         postsRequest.setNumberPerPage(numberPerPage);
         postsRequest.setOperation(OperationKafka.RETREIVE_ALL);
 
-        CompletableFuture<Posts> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, postsRequest);
+        CompletableFuture<Posts> completableFuture = replyingKafkaTemplate.requestReply(requestTopic, postsRequest);
 
         completableFuture.thenAccept(directories -> {
 
             List<Post> postList = directories.getPosts();
 
-            Link links[] = { linkTo(methodOn(PostRestController.class).getAllPosts(page,numberPerPage)).withSelfRel(),
-                    linkTo(methodOn(PostRestController.class).getAllPosts(page,numberPerPage)).withRel("getAllDirectories") };
+            Link links[] = {linkTo(methodOn(PostRestController.class).getAllPosts(pageToSend, numberPerPageToSend)).withSelfRel(),
+                    linkTo(methodOn(PostRestController.class).getAllPosts(pageToSend, numberPerPageToSend)).withRel("getAllDirectories")};
 
             List<PostRest> list = new ArrayList<PostRest>();
             for (Post post : postList) {
@@ -81,7 +90,64 @@ public class PostWebServiceImpl implements PostWebService {
         //delay();
         return deferredResult;
     }
-    public DeferredResult<ResponseEntity<PostRest>> getPost(UUID id){
+
+    public DeferredResult<ResponseEntity<CollectionModel<PostRest>>> listPostsByTopicId(Long topicId, Integer page,
+                                                                                        Integer numberPerPage) {
+        DeferredResult<ResponseEntity<CollectionModel<PostRest>>> deferredResult = new DeferredResult<>();
+
+        Posts postsRequest = new Posts();
+        if (page == null) {
+            page = 0;
+        }
+        if (numberPerPage == null) {
+            numberPerPage = 1000;
+        }
+
+        final Integer pageToSend = page;
+        final Integer numberPerPageToSend = numberPerPage;
+        List<Post> postRequestList = new ArrayList<>();
+        Post postSend = new Post();
+        postSend.setTopicId(topicId);
+        postRequestList.add(postSend);
+        postsRequest.setPosts(postRequestList);
+        postsRequest.setPage(page);
+        postsRequest.setNumberPerPage(numberPerPage);
+        postsRequest.setOperation(OperationKafka.RETREIVE_TOPIC);
+
+        CompletableFuture<Posts> completableFuture = replyingKafkaTemplate.requestReply(requestTopic, postsRequest);
+
+        completableFuture.thenAccept(directories -> {
+
+            List<Post> postList = directories.getPosts();
+
+            Link links[] = {linkTo(methodOn(PostRestController.class).getAllPostsByTopicId(topicId, pageToSend,
+                                numberPerPageToSend)).withSelfRel(),
+                    linkTo(methodOn(PostRestController.class).getAllPostsByTopicId(topicId, pageToSend,
+                                numberPerPageToSend)).withRel("getAllDirectories")};
+
+            List<PostRest> list = new ArrayList<PostRest>();
+            for (Post post : postList) {
+                PostRest directoryHateoas = convertEntityToHateoasEntity(post);
+                list.add(directoryHateoas
+                        .add(linkTo(methodOn(PostRestController.class).getPost(directoryHateoas.getPostId()))//directoryHateoas.getDirectoryId
+                                .withSelfRel()));
+
+            }
+            list.forEach(item -> LOGGER.debug(item.toString()));
+            CollectionModel<PostRest> result = CollectionModel.of(list, links);
+
+            deferredResult.setResult(new ResponseEntity<CollectionModel<PostRest>>(result, HttpStatus.OK));
+
+        }).exceptionally(ex -> {
+            LOGGER.error(ex.getMessage());
+            return null;
+        });
+
+        //delay();
+        return deferredResult;
+    }
+
+    public DeferredResult<ResponseEntity<PostRest>> getPost(UUID id) {
         DeferredResult<ResponseEntity<PostRest>> deferredResult = new DeferredResult<>();
 
         Posts postsRequest = new Posts();
@@ -92,7 +158,7 @@ public class PostWebServiceImpl implements PostWebService {
         postRequestList.add(post);
         postsRequest.setPosts(postRequestList);
 
-        CompletableFuture<Posts> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, postsRequest);
+        CompletableFuture<Posts> completableFuture = replyingKafkaTemplate.requestReply(requestTopic, postsRequest);
 
         completableFuture.thenAccept(directories -> {
 
@@ -111,8 +177,7 @@ public class PostWebServiceImpl implements PostWebService {
 
                 deferredResult.setResult(new ResponseEntity<PostRest>(directoryHateoas, HttpStatus.OK));
 
-            }
-            else {
+            } else {
                 LOGGER.debug("Post with postId : {} not retreived from Backend Microservice", id);
                 deferredResult.setResult(new ResponseEntity<PostRest>(HttpStatus.NOT_FOUND));
             }
@@ -123,20 +188,25 @@ public class PostWebServiceImpl implements PostWebService {
         });
         return deferredResult;
     }
-    public DeferredResult<ResponseEntity<PostRest>> createPost(PostWebDto createPostRest, Long headerUserId)
-            throws ExecutionException, InterruptedException{
+
+    public DeferredResult<ResponseEntity<PostRest>> createPost(PostWebDto postWebDto, Long headerUserId)
+            throws ExecutionException, InterruptedException {
         DeferredResult<ResponseEntity<PostRest>> deferredResult = new DeferredResult<>();
 
-        Post postRest =modelMapper.map(createPostRest,  Post.class);
-        postRest.setPostId(null);
+        Post postKafka = modelMapper.map(postWebDto, Post.class);
+        postKafka.setCreationDate(null);                       //// this two fields added
+        postKafka.setChangeDate(null);
+        postKafka.setPostId(null);
+        postKafka.setUserOwnerId(headerUserId);
+        postKafka.setUserCreatorId(headerUserId);
         Posts postsRequest = new Posts();
         postsRequest.setOperation(OperationKafka.CREATE);
         List<Post> postRequestList = new ArrayList<>();
-        postRequestList.add(postRest);
+        postRequestList.add(postKafka);
         postsRequest.setPosts(postRequestList);
         postsRequest.setHeaderUserId(headerUserId);
 
-        CompletableFuture<Posts> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, postsRequest);
+        CompletableFuture<Posts> completableFuture = replyingKafkaTemplate.requestReply(requestTopic, postsRequest);
 
         completableFuture.thenAccept(directories -> {
 
@@ -154,8 +224,7 @@ public class PostWebServiceImpl implements PostWebService {
                         .getPost(directoryHateoas.getPostId())).withSelfRel());
                 deferredResult.setResult(new ResponseEntity<PostRest>(directoryHateoas, HttpStatus.OK));
 
-            }
-            else {
+            } else {
                 LOGGER.debug("Post with code : {} not created by Backend Microservice");
                 deferredResult.setResult(new ResponseEntity<PostRest>(HttpStatus.CONFLICT));
             }
@@ -168,9 +237,15 @@ public class PostWebServiceImpl implements PostWebService {
         LOGGER.info("Ending");
         return deferredResult;
     }
+
     public DeferredResult<ResponseEntity<PostRest>> updatePost(UUID id, PostWebDto postDto, Long headerUserId) {
         DeferredResult<ResponseEntity<PostRest>> deferredResult = new DeferredResult<>();
-        Post post =modelMapper.map(postDto,  Post.class);
+        Post post = modelMapper.map(postDto, Post.class);
+        post.setTopicId(null);
+        post.setCreationDate(null);                       //// this five fields added
+        post.setChangeDate(null);
+        post.setUserOwnerId(null);
+        post.setUserCreatorId(null);
         Posts postsRequest = new Posts();
         postsRequest.setHeaderUserId(headerUserId);
         postsRequest.setOperation(OperationKafka.UPDATE);
@@ -179,14 +254,16 @@ public class PostWebServiceImpl implements PostWebService {
         postRequestList.add(post);
         postsRequest.setPosts(postRequestList);
 
-        CompletableFuture<Posts> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, postsRequest);
+        CompletableFuture<Posts> completableFuture = replyingKafkaTemplate.requestReply(requestTopic, postsRequest);
 
         completableFuture.thenAccept(directories -> {
 
             List<Post> postList = directories.getPosts();
             Post postRetreived = null;
             UUID directoryId = null;
-
+            if (directories.getOperation().equals(OperationKafka.FAILURE)){
+                deferredResult.setResult(new ResponseEntity<PostRest>(HttpStatus.NOT_FOUND));
+            }
             if (postList.iterator().hasNext()) {
                 postRetreived = postList.iterator().next();
                 directoryId = postRetreived.getPostId();
@@ -197,8 +274,7 @@ public class PostWebServiceImpl implements PostWebService {
                         .getPost(directoryHateoas.getPostId())).withSelfRel());
                 deferredResult.setResult(new ResponseEntity<PostRest>(directoryHateoas, HttpStatus.OK));
 
-            }
-            else {
+            } else {
                 LOGGER.debug("Post with code : {} not updated by Backend Microservice", id);
                 deferredResult.setResult(new ResponseEntity<PostRest>(HttpStatus.NOT_FOUND));
             }
@@ -210,7 +286,8 @@ public class PostWebServiceImpl implements PostWebService {
         });
         return deferredResult;
     }
-    public DeferredResult<ResponseEntity<Post>> deletePost(UUID id, Long headerUserId){
+
+    public DeferredResult<ResponseEntity<Post>> deletePost(UUID id, Long headerUserId) {
         DeferredResult<ResponseEntity<Post>> deferredResult = new DeferredResult<>();
 
         Posts postsRequest = new Posts();
@@ -222,7 +299,7 @@ public class PostWebServiceImpl implements PostWebService {
         postRequestList.add(postToDelete);
         postsRequest.setPosts(postRequestList);
 
-        CompletableFuture<Posts> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, postsRequest);
+        CompletableFuture<Posts> completableFuture = replyingKafkaTemplate.requestReply(requestTopic, postsRequest);
 
         completableFuture.thenAccept(directories -> {
 
@@ -230,8 +307,7 @@ public class PostWebServiceImpl implements PostWebService {
                 LOGGER.debug("Post with postId : {} deleted by Backend Microservice", id);
                 deferredResult.setResult(new ResponseEntity<Post>(HttpStatus.NO_CONTENT));
 
-            }
-            else {
+            } else {
                 LOGGER.debug("Post with id : {} suspected not deleted by Backend Microservice", id);
                 deferredResult.setResult(new ResponseEntity<Post>(HttpStatus.NOT_FOUND));
             }
@@ -242,8 +318,9 @@ public class PostWebServiceImpl implements PostWebService {
         });
         return deferredResult;
     }
-        private PostRest convertEntityToHateoasEntity(Post post){
-        return  modelMapper.map(post,  PostRest.class);
+
+    private PostRest convertEntityToHateoasEntity(Post post) {
+        return modelMapper.map(post, PostRest.class);
     }
 
 }

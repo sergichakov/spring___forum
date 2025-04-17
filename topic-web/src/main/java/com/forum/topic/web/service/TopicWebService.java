@@ -11,8 +11,8 @@ import org.springframework.web.context.request.async.DeferredResult;
 import java.util.concurrent.ExecutionException;
 
 public interface TopicWebService {
-    DeferredResult<ResponseEntity<TopicRest>> createTopic(TopicWebDto createPostRest) throws ExecutionException, InterruptedException;
-    DeferredResult<ResponseEntity<CollectionModel<TopicRest>>> listTopic(Integer page, Integer numberPerPage, Long headerUserId, UserDetailsRole role);
+    DeferredResult<ResponseEntity<TopicRest>> createTopic(TopicWebDto createPostRest, Long headerUserId) throws ExecutionException, InterruptedException;
+    DeferredResult<ResponseEntity<CollectionModel<TopicRest>>> listTopic(Integer page, Integer numberPerPage, Long headerUserId, UserDetailsRole role, Boolean allUserTopics);
     DeferredResult<ResponseEntity<TopicRest>> getTopic(Long id, Long headerUserId, UserDetailsRole role);
     DeferredResult<ResponseEntity<TopicRest>> updatePost(Long id, TopicWebDto post, Long headerUserId, UserDetailsRole role) ; //(String id, Post post)
     DeferredResult<ResponseEntity<Topic>> deletePost(Long id, Long headerUserId, UserDetailsRole role);

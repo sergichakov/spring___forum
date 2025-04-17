@@ -1,0 +1,4 @@
+com/forum/post/repo/PostServerIntegrationTest.class
+com/forum/post/repo/KafkaPostServerIntegreationTest.class
+com/forum/post/repo/KafkaConfigForDirectoryServer.class
+com/forum/post/repo/PostServerIntegrationTest$Initializer.class

@@ -44,11 +44,15 @@ public class TopicWebServiceImpl implements TopicWebService {
     private String requestReplyTopic;
 
     public DeferredResult<ResponseEntity<CollectionModel<TopicRest>>> listTopic(
-            Integer page, Integer numberPerPage, Long headerUserId, UserDetailsRole role){
+            Integer page, Integer numberPerPage, Long headerUserId, UserDetailsRole role,Boolean allUserTopicsBool){
         DeferredResult<ResponseEntity<CollectionModel<TopicRest>>> deferredResult = new DeferredResult<>();
 
         Topics topicsRequest = new Topics();
-        topicsRequest.setHeaderUserId(headerUserId);
+        if (allUserTopicsBool){
+            topicsRequest.setHeaderUserId(null);
+        }else {
+            topicsRequest.setHeaderUserId(headerUserId);
+        }
         topicsRequest.setRole(role);
         topicsRequest.setPage(page);
         topicsRequest.setNumberPerPage(numberPerPage);
@@ -62,8 +66,8 @@ public class TopicWebServiceImpl implements TopicWebService {
 
             List<Topic> topicList = directories.getTopics();
 
-            Link links[] = { linkTo(methodOn(TopicRestController.class).getAllPosts(page,numberPerPage,null)).withSelfRel(),
-                    linkTo(methodOn(TopicRestController.class).getAllPosts(page,numberPerPage,null)).withRel("getAllDirectories") };
+            Link links[] = { linkTo(methodOn(TopicRestController.class).getAllPosts(page,numberPerPage,null,null)).withSelfRel(),
+                    linkTo(methodOn(TopicRestController.class).getAllPosts(page,numberPerPage,null,null)).withRel("getAllDirectories") };
 
             List<TopicRest> list = new ArrayList<TopicRest>();
             for (Topic topic : topicList) {
@@ -132,16 +136,19 @@ public class TopicWebServiceImpl implements TopicWebService {
         return deferredResult;
     }
 
-    public DeferredResult<ResponseEntity<TopicRest>> createTopic(TopicWebDto createTopicRest) 
+    public DeferredResult<ResponseEntity<TopicRest>> createTopic(TopicWebDto createTopicDto, Long headerUserId)
             throws ExecutionException, InterruptedException{
         DeferredResult<ResponseEntity<TopicRest>> deferredResult = new DeferredResult<>();
 
-        Topic topicRest =modelMapper.map(createTopicRest,  Topic.class); 
-        topicRest.setPostId(null);
+        Topic topicKafka =modelMapper.map(createTopicDto,  Topic.class);
+        topicKafka.setCreationDate(null);
+        topicKafka.setChangeDate(null);
+        topicKafka.setPostId(null);
         Topics topicsRequest = new Topics();
+        topicsRequest.setHeaderUserId(headerUserId);
         topicsRequest.setOperation(OperationKafka.CREATE);//Directories.CREATE
         List<Topic> topicRequestList = new ArrayList<>();
-        topicRequestList.add(topicRest);
+        topicRequestList.add(topicKafka);
         topicsRequest.setTopics(topicRequestList);
 
         CompletableFuture<Topics> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, topicsRequest);
@@ -179,14 +186,17 @@ public class TopicWebServiceImpl implements TopicWebService {
     public DeferredResult<ResponseEntity<TopicRest>> updatePost(Long id, TopicWebDto topicDto, 
                                                                 Long headerUserId, UserDetailsRole role) {
         DeferredResult<ResponseEntity<TopicRest>> deferredResult = new DeferredResult<>();
-        Topic topic =modelMapper.map(topicDto,  Topic.class);
+        Topic topicKafka =modelMapper.map(topicDto,  Topic.class);
+        topicKafka.setCreationDate(null);
+        topicKafka.setChangeDate(null);
+        topicKafka.setUserOwnerId(null);
         Topics topicsRequest = new Topics();
         topicsRequest.setHeaderUserId(headerUserId);
         topicsRequest.setRole(role);
         topicsRequest.setOperation(OperationKafka.UPDATE);
-        topic.setPostId(id);
+        topicKafka.setPostId(id);
         List<Topic> topicRequestList = new ArrayList<>();
-        topicRequestList.add(topic);
+        topicRequestList.add(topicKafka);
         topicsRequest.setTopics(topicRequestList);
 
         CompletableFuture<Topics> completableFuture =  replyingKafkaTemplate.requestReply(requestTopic, topicsRequest);

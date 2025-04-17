@@ -1,0 +1,6 @@
+#Directory Web
+kafka:
+  bootstrap-servers: localhost:9092
+
+eureka:
+  defaultZoneUrl: http://u:p@localhost:8761/eureka/

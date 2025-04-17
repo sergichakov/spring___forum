@@ -1,8 +1,10 @@
 
 package com.forum.topic.repo.kafka.listener;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Set;
 
 import com.forum.topic.kafka.event.OperationKafka;
 import com.forum.topic.kafka.event.Topic;
@@ -12,6 +14,12 @@ import com.forum.topic.repo.model.TopicEntity;
 import com.forum.topic.repo.repository.TopicPagingRepository;
 import com.forum.topic.repo.repository.TopicRepository;
 //import jakarta.transaction.Transactional;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeanWrapperImpl;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -86,6 +94,7 @@ public class TopicListener {
 
     //------------------- Retreive a Topic --------------------------------------------------------
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames="topic")
     public Topics getTopic(Topics topics) {
 
         LOGGER.info("Start");
@@ -117,6 +126,7 @@ public class TopicListener {
     }
 
     @Transactional
+    @Cacheable(cacheNames="topic")
     public Topics createTopic(Topics topics) {
 
         LOGGER.info("Start");
@@ -138,16 +148,18 @@ public class TopicListener {
 
             topicToCreate = topics.getTopics().iterator().next();
             LOGGER.debug("Attempting to create a new Topic with code: {}", topicToCreate.getPostId());
-
+            topicToCreate.setUserOwnerId(topics.getHeaderUserId());
+            topicToCreate.setCreationDate(null);
+            topicToCreate.setChangeDate(null);
             System.out.println("gotten Create" + lookUpFindAll());
-
-            topicCreateEntity = topicRepository.save(mapper.apiToEntity(topicToCreate));
+            TopicEntity topicConvertEntity = mapper.apiToEntity(topicToCreate);
+            topicCreateEntity = topicRepository.save(topicConvertEntity);
             LOGGER.debug("a Topic with id {} created newly", topicCreateEntity.getPostId());
             topicsToReturn.setOperation(OperationKafka.SUCCESS);
             topicListToReturn = new ArrayList<Topic>();
             topicListToReturn.add(mapper.entityToApi(topicCreateEntity));
             topicsToReturn.setTopics(topicListToReturn);
-//            }
+
         } else {
             LOGGER.debug("Topic cannot be created, since param is null or empty");
             topicsToReturn.setOperation(OperationKafka.FAILURE);
@@ -167,12 +179,7 @@ public class TopicListener {
     }
 
     @Transactional
-    public void setUpBeforeFindAll(TopicEntity topicEntity) {
-        topicRepository.save(topicEntity);
-
-    }
-
-    @Transactional
+    @CachePut(cacheNames="topic")
     public Topics updateTopic(Topics topics) {
 
         LOGGER.info("Start of update");
@@ -180,7 +187,7 @@ public class TopicListener {
         List<Topic> topicListToReturn = null;
         Topic topicToUpdate = null;
         TopicEntity topicFoundEntity = null;
-        TopicEntity directoryUpdatedEntity = null;
+        TopicEntity topicUpdatedEntity = null;
 
 
         if ((null != topics) && (topics.getTopics().iterator().hasNext())) {
@@ -198,10 +205,12 @@ public class TopicListener {
                 LOGGER.debug("a Topic with id {} exist, attempting to update", topicFoundEntity.getPostId());
 
                 topicsToReturn.setOperation(OperationKafka.SUCCESS);
-
-                directoryUpdatedEntity = topicRepository.save(mapper.apiToEntity(topicToUpdate));
+                TopicEntity topicEntityFromKafka = mapper.apiToEntity(topicToUpdate);
+                BeanUtils.copyProperties(topicEntityFromKafka, topicFoundEntity,
+                        getNullPropertyNames(topicEntityFromKafka));
+                topicUpdatedEntity = topicRepository.save(topicFoundEntity);//topicEntityFromKafka);
                 topicListToReturn = new ArrayList<Topic>();
-                topicListToReturn.add(mapper.entityToApi(directoryUpdatedEntity));
+                topicListToReturn.add(mapper.entityToApi(topicUpdatedEntity));
                 topicsToReturn.setTopics(topicListToReturn);
 
             } else {
@@ -217,6 +226,7 @@ public class TopicListener {
     }
 
     @Transactional
+    @CacheEvict(cacheNames="topic")
     public Topics deleteTopic(Topics topics) {
 
         LOGGER.info("Start");
@@ -293,5 +303,18 @@ public class TopicListener {
 
         LOGGER.info("Ending");
         return topicsToReturn;
+    }
+    //    https://stackoverflow.com/questions/27818334/jpa-update-only-specific-fields
+    public static String[] getNullPropertyNames (Object source) {
+        final BeanWrapper src = new BeanWrapperImpl(source);
+        java.beans.PropertyDescriptor[] pds = src.getPropertyDescriptors();
+
+        Set<String> emptyNames = new HashSet<String>();
+        for(java.beans.PropertyDescriptor pd : pds) {
+            Object srcValue = src.getPropertyValue(pd.getName());
+            if (srcValue == null) emptyNames.add(pd.getName());
+        }
+        String[] result = new String[emptyNames.size()];
+        return emptyNames.toArray(result);
     }
 }

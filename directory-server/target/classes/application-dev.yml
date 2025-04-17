@@ -1,0 +1,10 @@
+#Directory Server
+datasource:
+  url: jdbc:postgresql://localhost:5432/directoriesdb
+  username: forum
+  password: ForumPassword
+hibernate:
+  ddl-auto: update
+
+kafka:
+  bootstrap-servers: localhost:9092

@@ -7,6 +7,7 @@ public enum OperationKafka {
     UPDATE,
     RETREIVE_ALL,
     RETREIVE_DETAILS,
+    RETREIVE_TOPIC,
     SUCCESS,
     FAILURE;
 

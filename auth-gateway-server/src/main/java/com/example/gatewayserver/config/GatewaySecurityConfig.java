@@ -28,6 +28,12 @@ public class GatewaySecurityConfig {
                     exchanges.pathMatchers("/oauth2/**").permitAll();
                     exchanges.pathMatchers("/swagger-ui/**").permitAll();
                     exchanges.pathMatchers("/api/**").permitAll();
+                    exchanges.pathMatchers("/dirictoriesweb/swagger-ui/**").permitAll();
+                    exchanges.pathMatchers("/topicsweb/swagger-ui/**").permitAll();
+                    exchanges.pathMatchers("/postsweb/swagger-ui/**").permitAll();
+                    exchanges.pathMatchers("/dirictoriesweb/v3/**").permitAll();
+                    exchanges.pathMatchers("/topicsweb/v3/**").permitAll();
+                    exchanges.pathMatchers("/postsweb/v3/**").permitAll();
                     exchanges.pathMatchers("/dirictoriesweb").hasRole("ADMIN");
                     exchanges.pathMatchers("/dirictoriesweb/**").hasRole("ADMIN");
                     exchanges.pathMatchers("/topicsweb").authenticated();

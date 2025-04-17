@@ -84,10 +84,22 @@ public class PostRestController {
         LOGGER.info("Ending");
         return deferredResult;
     }
+    @RequestMapping(value = "/postsweb/topic/{topicid}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public DeferredResult<ResponseEntity<CollectionModel<PostRest>>> getAllPostsByTopicId(@PathVariable("topicid") Long topicId,
+             @RequestParam (required = false) Integer page, @RequestParam(required = false) Integer numberPerPage) {//String id
+
+        LOGGER.info("Start");
+        LOGGER.debug("Fetching post with id: {}", topicId);
+        LOGGER.info("Thread : " + Thread.currentThread());
+        DeferredResult<ResponseEntity<CollectionModel<PostRest>>> deferredResult = postWebService.listPostsByTopicId(topicId, page, numberPerPage);
+
+        LOGGER.info("Ending");
+        return deferredResult;
+    }
 
     @RequestMapping(value = "/postsweb", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public DeferredResult<ResponseEntity<PostRest>> addPost(@RequestBody PostWebDto postRest,
-    @RequestHeader (name="Authorization") String token) throws ExecutionException, InterruptedException {//Directory directory
+    public DeferredResult<ResponseEntity<PostRest>> addPost(@RequestBody PostWebDto postWebDto,
+    @RequestHeader (name="Authorization", required = false) String token) throws ExecutionException, InterruptedException {//Directory directory
     	
     	LOGGER.info("Start");
     	LOGGER.debug("Creating Post with code: {}");//, directory.getCode());
@@ -95,7 +107,7 @@ public class PostRestController {
 		LOGGER.info("Thread : " + Thread.currentThread());
         Long headerUserId= Long.parseLong(getHeaderUserId(token,"userId"));
 
-		DeferredResult<ResponseEntity<PostRest>> deferredResult = postWebService.createPost(postRest, headerUserId);
+		DeferredResult<ResponseEntity<PostRest>> deferredResult = postWebService.createPost(postWebDto, headerUserId);
 
         LOGGER.info("Ending");
         return deferredResult;
@@ -108,7 +120,7 @@ public class PostRestController {
 
     @RequestMapping(value = "/postsweb/{postId}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
     public DeferredResult<ResponseEntity<PostRest>>
-			updateDirectory(@PathVariable("postId")UUID id, @RequestBody PostWebDto post, @RequestHeader (name="Authorization") String token) {
+			updateDirectory(@PathVariable("postId")UUID id, @RequestBody PostWebDto post, @RequestHeader (name="Authorization", required = false) String token) {
     	
     	LOGGER.info("Start");
     	LOGGER.debug("Updating Post with id: {}", id);
@@ -125,7 +137,7 @@ public class PostRestController {
 
     @RequestMapping(value = "/postsweb/{postId}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
     public DeferredResult<ResponseEntity<Post>> deletePost(@PathVariable("postId")UUID id,
-                                                           @RequestHeader (name="Authorization") String token) { // String Id
+                                                           @RequestHeader (name="Authorization", required = false) String token) { // String Id
     	
     	LOGGER.info("Start");
     	LOGGER.debug("Deleting Product with id: {}", id);

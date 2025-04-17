@@ -46,7 +46,7 @@ import org.springframework.context.annotation.Configuration;
                           Из возвращенного JSON скопируйте access token и вставте в Authorize -> JWT token</p>
                         
                         """,
-                contact = @Contact(url = "https://javarush.com/about/contacts", email = "support@javarush.com")
+                contact = @Contact(url = "http://localhost:8080/", email = "sergejsmelchakov@gmail.com")
         ),
         servers = {
                 @Server(url = "${app.host-url}")

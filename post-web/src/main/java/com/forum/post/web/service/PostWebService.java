@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutionException;
 public interface PostWebService {
     DeferredResult<ResponseEntity<PostRest>> createPost(PostWebDto createPostRest, Long headerUserId) throws ExecutionException, InterruptedException;
     DeferredResult<ResponseEntity<CollectionModel<PostRest>>> listPost(Integer page, Integer numberPerPage);
+    DeferredResult<ResponseEntity<CollectionModel<PostRest>>>listPostsByTopicId(Long topicId, Integer page, Integer numberPerPage);
     DeferredResult<ResponseEntity<PostRest>> getPost(UUID id);
     DeferredResult<ResponseEntity<PostRest>> updatePost(UUID id, PostWebDto post, Long headerUserId) ; //(String id, Post post)
     DeferredResult<ResponseEntity<Post>> deletePost(UUID id, Long headerUserId);

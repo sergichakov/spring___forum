@@ -7,6 +7,7 @@ package com.forum.directory.repo.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.sql.Timestamp;
 
@@ -26,7 +27,8 @@ public class DirectoryThemeEntity {
 
     @Column(name = "sub_dir_id")
     private Long subDirId;
-
+    @CreationTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "creation_date")
     private Timestamp creationDate;
 

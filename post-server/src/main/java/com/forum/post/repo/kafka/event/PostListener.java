@@ -1,9 +1,7 @@
 
 package com.forum.post.repo.kafka.event;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.UUID;
+import java.util.*;
 
 import com.forum.post.kafka.event.Post;
 import com.forum.post.kafka.event.Posts;
@@ -12,8 +10,16 @@ import com.forum.post.repo.mapper.PostMapper;
 import com.forum.post.repo.model.PostEntity;
 import com.forum.post.repo.repository.PostPagingRepository;
 import com.forum.post.repo.repository.PostRepository;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Component;
@@ -21,6 +27,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class PostListener {
@@ -60,6 +67,8 @@ public class PostListener {
             postsToReturn = getPost(posts);
         } else if (posts.getOperation().equals(OperationKafka.RETREIVE_ALL)) {
             postsToReturn = getAllPosts(posts);
+        } else if (posts.getOperation().equals(OperationKafka.RETREIVE_TOPIC)){
+            postsToReturn = getAllPostsByTopicId(posts);
         } else if (posts.getOperation().equals(OperationKafka.CREATE)) {
             postsToReturn = createPost(posts);
         } else if (posts.getOperation().equals(OperationKafka.UPDATE)) {
@@ -73,7 +82,9 @@ public class PostListener {
         return postsToReturn;
     }
 
-    private Posts getPost(Posts posts) {
+    @Transactional
+    @Cacheable(cacheNames="post")
+    public Posts getPost(Posts posts) {
 
         LOGGER.info("Start");
         Posts postsToReturn = new Posts();
@@ -99,8 +110,9 @@ public class PostListener {
         LOGGER.info("Ending");
         return postsToReturn;
     }
-
-    private Posts createPost(Posts posts) {
+    @Transactional
+    @Cacheable(cacheNames="post")
+    public Posts createPost(Posts posts) {
 
         LOGGER.info("Start");
         Posts postsToReturn = new Posts();
@@ -114,9 +126,14 @@ public class PostListener {
             postToCreate = posts.getPosts().iterator().next();
             postToCreate.setUserOwnerId(posts.getHeaderUserId());
             postToCreate.setUserCreatorId(posts.getHeaderUserId());
+            PostEntity postEntity = mapper.apiToEntity(postToCreate);
+//            postEntity.setCreationDate(null);                       //// this two fields added
+//            postEntity.setChangeDate(null);
+//            BeanUtils.copyProperties(postEntity, postFoundEntity, getNullPropertyNames(postEntity));
+
             LOGGER.debug("Attempting to create a new Post with code: {}", postToCreate.getPostId());
 
-            postCreateEntity = postRepository.save(mapper.apiToEntity(postToCreate));
+            postCreateEntity = postRepository.save(postEntity);
             LOGGER.debug("A Post with id {} created newly", postCreateEntity.getPostId());
             postsToReturn.setOperation(OperationKafka.SUCCESS);
             postListToReturn = new ArrayList<Post>();
@@ -130,14 +147,15 @@ public class PostListener {
         LOGGER.info("Ending");
         return postsToReturn;
     }
-
-    private Posts updatePost(Posts posts) {
+    @Transactional
+    @CachePut(cacheNames="post")
+    public Posts updatePost(Posts posts) {
 
         LOGGER.info("Start");
         Posts postsToReturn = new Posts();
         List<Post> postListToReturn = null;
         Post postToUpdate = null;
-        PostEntity directoryFoundEntity = null;
+        PostEntity postFoundEntity = null;
         PostEntity directoryUpdatedEntity = null;
 
 
@@ -146,18 +164,25 @@ public class PostListener {
             postToUpdate = posts.getPosts().iterator().next();
             LOGGER.debug("Attempting to find a Post with id: {} to update", postToUpdate.getPostId());
             if (posts.getHeaderUserId() == null) {
-                directoryFoundEntity = postRepository.findById((postToUpdate.getPostId())).get();
+                postFoundEntity = postRepository.findById((postToUpdate.getPostId())).get();
             } else {
-                directoryFoundEntity = postRepository.findByPostIdAndUserOwnerId(postToUpdate.getPostId(), posts.getHeaderUserId());
+                postFoundEntity = postRepository.findByPostIdAndUserOwnerId(postToUpdate.getPostId(), posts.getHeaderUserId());
             }
-            if (null != directoryFoundEntity) {
-                LOGGER.debug("A Post with id {} exist, attempting to update", directoryFoundEntity.getPostId());
+            if (null != postFoundEntity) {
+                LOGGER.debug("A Post with id {} exist, attempting to update", postFoundEntity.getPostId());
                 postsToReturn.setOperation(OperationKafka.SUCCESS);
-                postToUpdate.setUserOwnerId(posts.getHeaderUserId());
-                postToUpdate.setUserCreatorId(posts.getHeaderUserId());
+//                postToUpdate.setUserOwnerId(posts.getHeaderUserId());
+//                postToUpdate.setUserCreatorId(posts.getHeaderUserId());
                 PostEntity postEntity = mapper.apiToEntity(postToUpdate);
+//                postEntity.setTopicId(null);
+//                postEntity.setCreationDate(null);                       //// this five fields added
+//                postEntity.setChangeDate(null);
+//                postEntity.setUserOwnerId(null);
+//                postEntity.setUserCreatorId(null);
+//                PostEntity existingPostEntity = postRepository.findByPostIdAndUserOwnerId(,posts.getHeaderUserId());
 
-                directoryUpdatedEntity = postRepository.save(postEntity);
+                BeanUtils.copyProperties(postEntity, postFoundEntity, getNullPropertyNames(postEntity));
+                directoryUpdatedEntity = postRepository.save(postFoundEntity);// was postEntity
                 postListToReturn = new ArrayList<Post>();
                 Post post = mapper.entityToApi(directoryUpdatedEntity);
 
@@ -175,8 +200,9 @@ public class PostListener {
         LOGGER.info("Ending");
         return postsToReturn;
     }
-
-    private Posts deletePost(Posts posts) {
+    @Transactional
+    @CacheEvict(cacheNames="post")
+    public Posts deletePost(Posts posts) {
 
         LOGGER.info("Start");
         Posts postsToReturn = new Posts();
@@ -213,8 +239,9 @@ public class PostListener {
         LOGGER.info("Ending");
         return postsToReturn;
     }
-
-    private Posts getAllPosts(Posts posts) {
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames="post")
+    public Posts getAllPosts(Posts posts) {
 
         LOGGER.info("Start");
         Posts postsToReturn = new Posts();
@@ -227,7 +254,7 @@ public class PostListener {
         if (numberPerPage == null) {
             numberPerPage = 1000;
         }
-        Iterable<PostEntity> iterable = postPagingRepository.findAll(PageRequest.of(page, numberPerPage));
+        Page<PostEntity> iterable = postPagingRepository.findAllByOrderByTopicIdAsc(PageRequest.of(page, numberPerPage));
 
         List<Post> postListToReturn = new ArrayList<Post>();
         for (PostEntity postEntity : iterable) {
@@ -244,5 +271,50 @@ public class PostListener {
 
         LOGGER.info("Ending");
         return postsToReturn;
+    }
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames="post")
+    public Posts getAllPostsByTopicId(Posts posts){
+        LOGGER.info("Start");
+        Posts postsToReturn = new Posts();
+
+        Integer page = posts.getPage();
+        Integer numberPerPage = posts.getNumberPerPage();
+        if (page == null) {
+            page = 0;
+        }
+        if (numberPerPage == null) {
+            numberPerPage = 1000;
+        }
+        Page<PostEntity> iterable = postPagingRepository.findAllByTopicIdOrderByTopicIdAsc(posts.getPosts().get(0).getTopicId(), PageRequest.of(page, numberPerPage));
+
+        List<Post> postListToReturn = new ArrayList<Post>();
+        for (PostEntity postEntity : iterable) {
+            LOGGER.info("postEntity_" + postEntity.toString());
+            postListToReturn.add(mapper.entityToApi(postEntity));
+        }
+        if (postListToReturn.size() == 0) {
+            LOGGER.debug("No posts retreived from repository");
+        }
+        postListToReturn.forEach(item -> LOGGER.info(item.toString()));
+
+        postsToReturn.setOperation(OperationKafka.SUCCESS);
+        postsToReturn.setPosts(postListToReturn);
+
+        LOGGER.info("Ending");
+        return postsToReturn;
+    }
+//    https://stackoverflow.com/questions/27818334/jpa-update-only-specific-fields
+    public static String[] getNullPropertyNames (Object source) {
+        final BeanWrapper src = new BeanWrapperImpl(source);
+        java.beans.PropertyDescriptor[] pds = src.getPropertyDescriptors();
+
+        Set<String> emptyNames = new HashSet<String>();
+        for(java.beans.PropertyDescriptor pd : pds) {
+            Object srcValue = src.getPropertyValue(pd.getName());
+            if (srcValue == null) emptyNames.add(pd.getName());
+        }
+        String[] result = new String[emptyNames.size()];
+        return emptyNames.toArray(result);
     }
 }
