@@ -1,7 +1,0 @@
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/authorization-server/src/main/java/com/example/authorizationserver/AuthorizationServerApplication.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/authorization-server/src/main/java/com/example/authorizationserver/controller/JwkKeyEndpoint.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/authorization-server/src/main/java/com/example/authorizationserver/repository/UserRepository.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/authorization-server/src/main/java/com/example/authorizationserver/config/AuthorizationServerConfig.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/authorization-server/src/main/java/com/example/authorizationserver/config/DefaultSecurityConfig.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/authorization-server/src/main/java/com/example/authorizationserver/model/UserEntity.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/authorization-server/src/main/java/com/example/authorizationserver/service/CustomUserDetailsService.java

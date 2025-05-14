@@ -1,9 +1,0 @@
-com/forum/directory/web/config/OpenApiConfig.class
-com/forum/directory/web/config/DirectoryKafkaConfig.class
-com/forum/directory/web/hateoas/model/DirectoryRest.class
-com/forum/directory/web/DirectoryRestController.class
-com/forum/directory/web/config/DirectoryWebSecurityConfig.class
-com/forum/directory/web/model/DirectoryWebDto.class
-com/forum/directory/web/service/DirectoryWebServiceImpl.class
-com/forum/directory/web/ForumDirectoryWebMicroserviceApplication.class
-com/forum/directory/web/service/DirectoryWebService.class

@@ -1,8 +1,0 @@
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/post-server/src/main/java/com/forum/post/repo/ForumPostServerMicroserviceApplication.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/post-server/src/main/java/com/forum/post/repo/kafka/event/PostListener.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/post-server/src/main/java/com/forum/post/repo/model/PostEntity.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/post-server/src/main/java/com/forum/post/repo/config/kafka/KafkaConfig.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/post-server/src/main/java/com/forum/post/repo/repository/PostPagingRepository.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/post-server/src/main/java/com/forum/post/repo/mapper/PostMapper.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/post-server/src/main/java/com/forum/post/repo/repository/PostRepository.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/post-server/src/main/java/com/forum/post/repo/config/repository/PostRepositoryConfiguration.java

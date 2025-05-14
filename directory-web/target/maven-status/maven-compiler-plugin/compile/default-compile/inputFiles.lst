@@ -1,9 +1,0 @@
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/directory-web/src/main/java/com/forum/directory/web/DirectoryRestController.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/directory-web/src/main/java/com/forum/directory/web/ForumDirectoryWebMicroserviceApplication.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/directory-web/src/main/java/com/forum/directory/web/config/DirectoryKafkaConfig.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/directory-web/src/main/java/com/forum/directory/web/config/DirectoryWebSecurityConfig.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/directory-web/src/main/java/com/forum/directory/web/config/OpenApiConfig.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/directory-web/src/main/java/com/forum/directory/web/hateoas/model/DirectoryRest.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/directory-web/src/main/java/com/forum/directory/web/model/DirectoryWebDto.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/directory-web/src/main/java/com/forum/directory/web/service/DirectoryWebService.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/directory-web/src/main/java/com/forum/directory/web/service/DirectoryWebServiceImpl.java

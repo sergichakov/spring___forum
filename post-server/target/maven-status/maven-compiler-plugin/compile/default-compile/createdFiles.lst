@@ -1,9 +1,0 @@
-com/forum/post/repo/repository/PostPagingRepository.class
-com/forum/post/repo/mapper/PostMapperImpl.class
-com/forum/post/repo/repository/PostRepository.class
-com/forum/post/repo/config/kafka/KafkaConfig.class
-com/forum/post/repo/config/repository/PostRepositoryConfiguration.class
-com/forum/post/repo/ForumPostServerMicroserviceApplication.class
-com/forum/post/repo/mapper/PostMapper.class
-com/forum/post/repo/kafka/event/PostListener.class
-com/forum/post/repo/model/PostEntity.class

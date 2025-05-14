@@ -1,9 +1,0 @@
-com/forum/directory/repo/mapper/DirectoryMapper.class
-com/forum/directory/repo/model/DirectoryThemeEntity.class
-com/forum/directory/repo/ForumDirectoryServerMicroserviceApplication.class
-com/forum/directory/repo/config/kafka/KafkaConfig.class
-com/forum/directory/repo/repository/DirectoryPagingRepository.class
-com/forum/directory/repo/kafka/listener/DirectoryListener.class
-com/forum/directory/repo/repository/DirectoryRepository.class
-com/forum/directory/repo/mapper/DirectoryMapperImpl.class
-com/forum/directory/repo/config/repository/ProductRepositoryConfiguration.class

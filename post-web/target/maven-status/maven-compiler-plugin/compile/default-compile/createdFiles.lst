@@ -1,9 +1,0 @@
-com/forum/post/web/model/PostWebDto.class
-com/forum/post/web/config/PostWebSecurityConfig.class
-com/forum/post/web/hateoas/model/PostRest.class
-com/forum/post/web/service/PostWebServiceImpl.class
-com/forum/post/web/config/PostKafkaConfig.class
-com/forum/post/web/controller/PostRestController.class
-com/forum/post/web/config/OpenApiConfig.class
-com/forum/post/web/service/PostWebService.class
-com/forum/post/web/ForumPostWebMicroserviceApplication.class

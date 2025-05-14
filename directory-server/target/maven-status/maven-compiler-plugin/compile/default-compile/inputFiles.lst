@@ -1,8 +1,0 @@
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/directory-server/src/main/java/com/forum/directory/repo/config/kafka/KafkaConfig.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/directory-server/src/main/java/com/forum/directory/repo/mapper/DirectoryMapper.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/directory-server/src/main/java/com/forum/directory/repo/model/DirectoryThemeEntity.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/directory-server/src/main/java/com/forum/directory/repo/config/repository/ProductRepositoryConfiguration.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/directory-server/src/main/java/com/forum/directory/repo/repository/DirectoryRepository.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/directory-server/src/main/java/com/forum/directory/repo/repository/DirectoryPagingRepository.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/directory-server/src/main/java/com/forum/directory/repo/ForumDirectoryServerMicroserviceApplication.java
-/media/user/downloads1/IdeaProjects/spring_kafka_cloud/spring_forum_collected/directory-server/src/main/java/com/forum/directory/repo/kafka/listener/DirectoryListener.java
