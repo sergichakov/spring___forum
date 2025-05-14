@@ -108,14 +108,15 @@ public class TopicListener {
             } else {
                 topicEntity = topicRepository.findByPostIdAndUserOwnerId(postId, topics.getHeaderUserId());
             }
-            topicsToReturn.setOperation(OperationKafka.SUCCESS);
             if (topicEntity == null) {
                 LOGGER.debug("Topic with topicId : {} not found in repository", postId);
+                topicsToReturn.setOperation(OperationKafka.FAILURE);
             } else {
                 LOGGER.debug("Topic with topicId : {} found in repository", postId);
                 List<Topic> topicListToReturn = new ArrayList<Topic>();
                 topicListToReturn.add(mapper.entityToApi(topicEntity));
                 topicsToReturn.setTopics(topicListToReturn);
+                topicsToReturn.setOperation(OperationKafka.SUCCESS);
             }
         } else {
             LOGGER.debug("Topic cannot be fetched, since param is null or empty");

@@ -43,9 +43,7 @@ import org.springframework.context.annotation.Configuration;
                         http://127.0.0.1:9000/oauth2/token?grant_type=authorization_code&code=<br>
                           Из возвращенного JSON скопируйте access token и вставте в Authorize -> JWT token</p><br>
                         Topic - микросервис тем - первых постов, ожидающих модерации Admin'ом. Admin регистрирует пост из Topic в Directories.
-                          Пользователи и Admin'ы видят только свои Topic. Чтобы увидеть все Topics требутся в GET/topicsweb 
-                        передать body с json с полем { "userOwnerId" : "null" }
-                        
+                          Пользователи и Admin'ы видят только свои Topic. Чтобы увидеть все Topics требутся в GET/topicsweb?allusers=true
                         """,
                 contact = @Contact(url = "https://localhost:8080/", email = "sergejsmelchakov@gmail.com")
         ),

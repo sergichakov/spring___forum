@@ -43,8 +43,8 @@ import org.springframework.context.annotation.Configuration;
                         --header<br> 'Authorization: Basic Z2F0ZXdheTpzZWNyZXQ='<br>
                           Затем вставте полученный код в поле code= в ссылке <br> 
                         http://127.0.0.1:9000/oauth2/token?grant_type=authorization_code&code=<br>
-                          Из возвращенного JSON скопируйте access token и вставте в Authorize -> JWT token</p>
-                        
+                          Из возвращенного JSON скопируйте access token и вставте в Authorize -> JWT token</p><br>
+                        <p>Admin регистрирует номер топика, получаемый из /directoriesweb/maxtopic.</p>
                         """,
                 contact = @Contact(url = "http://localhost:8080/", email = "sergejsmelchakov@gmail.com")
         ),

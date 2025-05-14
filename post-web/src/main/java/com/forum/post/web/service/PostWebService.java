@@ -16,5 +16,5 @@ public interface PostWebService {
     DeferredResult<ResponseEntity<CollectionModel<PostRest>>>listPostsByTopicId(Long topicId, Integer page, Integer numberPerPage);
     DeferredResult<ResponseEntity<PostRest>> getPost(UUID id);
     DeferredResult<ResponseEntity<PostRest>> updatePost(UUID id, PostWebDto post, Long headerUserId) ; //(String id, Post post)
-    DeferredResult<ResponseEntity<Post>> deletePost(UUID id, Long headerUserId);
+    DeferredResult<ResponseEntity<PostRest>> deletePost(UUID id, Long headerUserId);
 }

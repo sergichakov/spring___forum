@@ -1,0 +1,415 @@
+
+version: "3.9"
+volumes:
+  volume0:
+  volume1:
+  volume2:
+  prom_data:
+#networks:
+#  kafka:
+
+
+services:
+  kafka-0:
+    image: 'docker.io/bitnami/kafka:3.7' #bitnami/kafka:3.7'
+    container_name: kafka-0
+    hostname: kafka-0
+    ports:
+#      - "29093:29093"
+      - "29092:29092"
+#      - "29096:9096"
+#    networks:
+#      - kafka
+    environment:
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=INTERNAL
+      - KAFKA_CFG_LISTENERS=INTERNAL://:9092,EXTERNAL://:29092,CONTROLLER://kafka-0:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+#      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      - KAFKA_CFG_ADVERTISED_LISTENERS=INTERNAL://kafka-0:9092,EXTERNAL://localhost:29092
+#      - KAFKA_CFG_BROKER_ID=1
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CLIENT_LISTENER_NAME=EXTERNAL
+
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_KRAFT_CLUSTER_ID=L0ZEQh1yTbGhNNUE7-6wSQ
+#    volumes:
+#      - volume0:/bitnami/kafka
+    healthcheck:
+      test: "bash -c 'printf \"\" > /dev/tcp/127.0.0.1/9092; exit $$?;'"
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+  kafka-1:
+    image: 'docker.io/bitnami/kafka:3.7' #bitnami/kafka:3.7'
+    container_name: kafka-1
+    hostname: kafka-1
+    ports:
+      - "29093:29093"
+#    networks:
+#      - kafka
+    environment:
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=INTERNAL
+      - KAFKA_CFG_LISTENERS=INTERNAL://:9092,EXTERNAL://:29093,CONTROLLER://kafka-1:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      #      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      - KAFKA_CFG_ADVERTISED_LISTENERS=INTERNAL://kafka-1:9092,EXTERNAL://localhost:29093
+#      - KAFKA_CFG_BROKER_ID=2
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CLIENT_LISTENER_NAME=EXTERNAL
+
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_KRAFT_CLUSTER_ID=L0ZEQh1yTbGhNNUE7-6wSQ
+#    volumes:
+#      - volume1:/bitnami/kafka
+    healthcheck:
+      test: "bash -c 'printf \"\" > /dev/tcp/127.0.0.1/9092; exit $$?;'"
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+  kafka-2:
+    image: 'docker.io/bitnami/kafka:3.7' #bitnami/kafka:3.7'
+    container_name: kafka-2
+    hostname: kafka-2
+    ports:
+      - "29094:29094"
+#    networks:
+#      - kafka
+    environment:
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=INTERNAL
+      - KAFKA_CFG_LISTENERS=INTERNAL://:9092,EXTERNAL://:29094,CONTROLLER://kafka-2:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      #      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      - KAFKA_CFG_ADVERTISED_LISTENERS=INTERNAL://kafka-2:9092,EXTERNAL://localhost:29094
+#      - KAFKA_CFG_BROKER_ID=102
+      - KAFKA_CFG_NODE_ID=2
+      - KAFKA_CLIENT_LISTENER_NAME=EXTERNAL
+
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_KRAFT_CLUSTER_ID=L0ZEQh1yTbGhNNUE7-6wSQ
+#    volumes:
+#      - volume2:/bitnami/kafka
+    healthcheck:
+      test: "bash -c 'printf \"\" > /dev/tcp/127.0.0.1/9092; exit $$?;'"
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.4.0
+    container_name: kafka-ui
+    ports:
+      - "18080:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS=kafka-0:9092,kafka-1:9092,kafka-2:9092
+      - KAFKA_CLUSTERS_0_NAME=kraft
+    depends_on:
+      - kafka-0
+      - kafka-1
+      - kafka-2
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider localhost:18080 || exit 1
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  kafka-exporter:
+    container_name: kafka-exporter
+    image: docker.io/bitnami/kafka-exporter:1.7.0
+    hostname: kafka-exporter
+    ports:
+      - 9308:9308
+    restart: always
+#    networks:
+#      - kafka
+    command: --kafka.server=kafka-0:9092 --kafka.server=kafka-1:9092 --kafka.server=kafka-2:9092 --log.level=debug #--sasl.enabled --sasl.mechanism=PLAIN --sasl.username=sa --sasl.password=000000 --tls.enabled --tls.insecure-skip-tls-verify --tls.ca-file=/kafka.truststore.jks --log.level=debug
+#    volumes:
+#      - ./truststore/kafka.truststore.jks:/kafka.truststore.jks:ro
+    depends_on:
+      kafka-0:
+        condition: service_healthy
+      kafka-1:
+        condition: service_healthy
+      kafka-2:
+        condition: service_healthy
+    healthcheck:
+      test: "bash -c 'printf \"\" > /dev/tcp/127.0.0.1/9308; exit $$?;'"
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prom_data:/prometheus
+#    networks:
+#      - kafka
+    depends_on:
+      - kafka-exporter
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider localhost:9090 || exit 1
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: grafana
+    ports:
+      - 3000:3000
+    environment:
+      # AUTH
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+#    networks:
+#      - kafka
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: curl --fail localhost:3000
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+
+#authorization, gateway, resource services
+  resource-service:
+    build:
+      dockerfile: resource-service/Dockerfile
+      context: .
+  eureka-server:
+    build:
+      dockerfile: eureka-server/Dockerfile
+      context: .
+    ports:
+      - 8761:8761
+    healthcheck:  #http://localhost:8761/eureka/apps
+      test: wget --no-verbose --tries=1 --spider http://u:p@localhost:8761 || exit 1
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+  postgres-users_repo:
+    image: postgres:15.12-bookworm
+    ports:
+      - 15436:5432
+    volumes:
+      - ./config:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_PASSWORD=ForumPassword
+      - POSTGRES_USER=forum
+      - POSTGRES_DB=users_repo
+    healthcheck:
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U forum -d users_repo'" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+  authorization-server:
+    build:
+      dockerfile: authorization-server/Dockerfile
+      context: .
+    ports:
+      - 9000:9000
+    depends_on:
+      postgres-users_repo:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      #test: wget --no-verbose --tries=1 --spider http://localhost/oauth2/ready #|| exit 1
+      test: wget --no-verbose --tries=1 --spider http://localhost:9000/jwks || exit 1
+#      # ## https://github.com/navikt/fp-frontend/blob/master/docker-compose.yml
+#      #'http://localhost:9000/default/.well-known/openid-configuration'
+#      test: [
+#        'CMD',
+#        'wget',
+#        '--no-verbose',
+#        '--tries=1',
+#        '--spider',
+#        'http://localhost:9000/oauth/token || exit 1',
+#      ]
+      interval: 20s
+      timeout: 20s
+      retries: 3
+      start_period: 60s
+  auth-gateway-server:
+    build:
+      dockerfile: auth-gateway-server/Dockerfile
+      context: .
+    ports:
+      - 8080:8080
+    restart: always
+    depends_on:
+      authorization-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+
+
+
+# postgres databases start
+  postgres-topic:
+    image: postgres:15.12-bookworm
+    ports:
+      - 15433:5432
+    volumes:
+      - ./config:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_PASSWORD=ForumPassword
+      - POSTGRES_USER=forum
+      - POSTGRES_DB=topicsdb
+    healthcheck:
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U forum -d topicsdb'" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+  postgres-directory:
+    image: postgres:15.12-bookworm
+    ports:
+      - 15434:5432
+    volumes:
+      - ./config:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_PASSWORD=ForumPassword
+      - POSTGRES_USER=forum
+      - POSTGRES_DB=directoriesdb
+    healthcheck:
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U forum -d directoriesdb'" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+  postgres-post:
+    image: postgres:15.12-bookworm
+    ports:
+      - 15435:5432
+    volumes:
+      - ./config:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_PASSWORD=ForumPassword
+      - POSTGRES_USER=forum
+      - POSTGRES_DB=postsdb
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U forum -d postsdb'"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # microservices
+
+  topic-server:
+    build:
+      dockerfile: topic-server/Dockerfile
+      context: .
+    depends_on:
+      kafka-0:
+        condition: service_healthy
+      kafka-1:
+        condition: service_healthy
+      kafka-2:
+        condition: service_healthy
+      postgres-topic:
+        condition: service_healthy
+  topic-web:
+    build:
+      dockerfile: topic-web/Dockerfile
+      context: .
+    ports:
+      - 18071:18071
+    depends_on:
+      kafka-0:
+        condition: service_healthy
+      kafka-1:
+        condition: service_healthy
+      kafka-2:
+        condition: service_healthy
+      authorization-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+  directory-server:
+    build:
+      dockerfile: directory-server/Dockerfile
+      context: .
+    depends_on:
+      kafka-0:
+        condition: service_healthy
+      kafka-1:
+        condition: service_healthy
+      kafka-2:
+        condition: service_healthy
+      postgres-directory:
+        condition: service_healthy
+  directory-web:
+    build:
+      dockerfile: directory-web/Dockerfile
+      context: .
+    ports:
+      - 18081:18081
+    depends_on:
+      kafka-0:
+        condition: service_healthy
+      kafka-1:
+        condition: service_healthy
+      kafka-2:
+        condition: service_healthy
+      authorization-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+  post-server:
+    build:
+      dockerfile: post-server/Dockerfile
+      context: .
+    depends_on:
+      kafka-0:
+        condition: service_healthy
+      kafka-1:
+        condition: service_healthy
+      kafka-2:
+        condition: service_healthy
+      postgres-post:
+        condition: service_healthy
+  post-web:
+    build:
+      dockerfile: post-web/Dockerfile
+      context: .
+    ports:
+      - 18091:18091
+    depends_on:
+      kafka-0:
+        condition: service_healthy
+      kafka-1:
+        condition: service_healthy
+      kafka-2:
+        condition: service_healthy
+      authorization-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy

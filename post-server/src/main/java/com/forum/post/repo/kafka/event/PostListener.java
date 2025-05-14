@@ -92,16 +92,19 @@ public class PostListener {
             UUID postId = ((Post) posts.getPosts().iterator().next()).getPostId();
             LOGGER.debug("Fetching Post with postId : {}", postId);
 
-            PostEntity postEntity = postRepository.findById((postId)).get();
 
-            postsToReturn.setOperation(OperationKafka.SUCCESS);
-            if (postEntity == null) {
+
+            Optional<PostEntity>optionalPostFoundEntity = postRepository.findById((postId));
+            if (!optionalPostFoundEntity.isPresent()) {
                 LOGGER.debug("Post with postId : {} not found in repository", postId);
+                postsToReturn.setOperation(OperationKafka.FAILURE);
             } else {
+                PostEntity postEntity = optionalPostFoundEntity.get();
                 LOGGER.debug("Post with postId : {} found in repository", postId);
                 List<Post> postListToReturn = new ArrayList<Post>();
                 postListToReturn.add(mapper.entityToApi(postEntity));
                 postsToReturn.setPosts(postListToReturn);
+                postsToReturn.setOperation(OperationKafka.SUCCESS);
             }
         } else {
             LOGGER.debug("Post cannot be fetched, since param is null or empty");
@@ -164,7 +167,13 @@ public class PostListener {
             postToUpdate = posts.getPosts().iterator().next();
             LOGGER.debug("Attempting to find a Post with id: {} to update", postToUpdate.getPostId());
             if (posts.getHeaderUserId() == null) {
-                postFoundEntity = postRepository.findById((postToUpdate.getPostId())).get();
+                Optional<PostEntity>optionalPostFoundEntity = postRepository.findById((postToUpdate.getPostId()));
+                if (optionalPostFoundEntity.isPresent()){
+                    postFoundEntity = optionalPostFoundEntity.get();
+                }else{
+                    postsToReturn.setOperation(OperationKafka.FAILURE);
+                    return postsToReturn;
+                }
             } else {
                 postFoundEntity = postRepository.findByPostIdAndUserOwnerId(postToUpdate.getPostId(), posts.getHeaderUserId());
             }
@@ -208,19 +217,26 @@ public class PostListener {
         Posts postsToReturn = new Posts();
         List<Post> postListToReturn = null;
         Post postToDelete = null;
-        PostEntity directoryFoundEntity = null;
+        PostEntity postFoundEntity = null;
 
         if ((null != posts) && (posts.getPosts().iterator().hasNext())) {
 
             postToDelete = posts.getPosts().iterator().next();
             LOGGER.debug("Attempting to find a Post with id: {} to delete", postToDelete.getPostId());
             if (posts.getHeaderUserId() == null) {
-                directoryFoundEntity = postRepository.findById((postToDelete.getPostId())).get();
+//                postFoundEntity = postRepository.findById((postToDelete.getPostId())).get();
+                Optional<PostEntity>optionalPostFoundEntity = postRepository.findById((postToDelete.getPostId()));
+                if (optionalPostFoundEntity.isPresent()){
+                    postFoundEntity = optionalPostFoundEntity.get();
+                }else{
+                    postsToReturn.setOperation(OperationKafka.FAILURE);
+                    return postsToReturn;
+                }
             } else {
-                directoryFoundEntity = postRepository.findByPostIdAndUserOwnerId(postToDelete.getPostId(), posts.getHeaderUserId());
+                postFoundEntity = postRepository.findByPostIdAndUserOwnerId(postToDelete.getPostId(), posts.getHeaderUserId());
             }
-            if (null != directoryFoundEntity) {
-                LOGGER.debug("A Post with id {} exist, attempting to delete", directoryFoundEntity.getPostId());
+            if (null != postFoundEntity) {
+                LOGGER.debug("A Post with id {} exist, attempting to delete", postFoundEntity.getPostId());
                 postsToReturn.setOperation(OperationKafka.SUCCESS);
 
                 postRepository.delete(mapper.apiToEntity(postToDelete));
@@ -255,20 +271,22 @@ public class PostListener {
             numberPerPage = 1000;
         }
         Page<PostEntity> iterable = postPagingRepository.findAllByOrderByTopicIdAsc(PageRequest.of(page, numberPerPage));
+        if(iterable.hasContent()) {
+            List<Post> postListToReturn = new ArrayList<Post>();
+            for (PostEntity postEntity : iterable) {
+                LOGGER.info("postEntity_" + postEntity.toString());
+                postListToReturn.add(mapper.entityToApi(postEntity));
+            }
+            if (postListToReturn.size() == 0) {
+                LOGGER.debug("No posts retreived from repository");
+            }
+            postListToReturn.forEach(item -> LOGGER.info(item.toString()));
 
-        List<Post> postListToReturn = new ArrayList<Post>();
-        for (PostEntity postEntity : iterable) {
-            LOGGER.info("postEntity_" + postEntity.toString());
-            postListToReturn.add(mapper.entityToApi(postEntity));
+            postsToReturn.setOperation(OperationKafka.SUCCESS);
+            postsToReturn.setPosts(postListToReturn);
+        }else{
+            postsToReturn.setOperation(OperationKafka.FAILURE);
         }
-        if (postListToReturn.size() == 0) {
-            LOGGER.debug("No posts retreived from repository");
-        }
-        postListToReturn.forEach(item -> LOGGER.info(item.toString()));
-
-        postsToReturn.setOperation(OperationKafka.SUCCESS);
-        postsToReturn.setPosts(postListToReturn);
-
         LOGGER.info("Ending");
         return postsToReturn;
     }
@@ -286,21 +304,23 @@ public class PostListener {
         if (numberPerPage == null) {
             numberPerPage = 1000;
         }
-        Page<PostEntity> iterable = postPagingRepository.findAllByTopicIdOrderByTopicIdAsc(posts.getPosts().get(0).getTopicId(), PageRequest.of(page, numberPerPage));
+        Page<PostEntity> iterable = postPagingRepository.findAllByTopicIdOrderByCreationDateAsc(posts.getPosts().get(0).getTopicId(), PageRequest.of(page, numberPerPage));
+        if(iterable.hasContent()) {
+            List<Post> postListToReturn = new ArrayList<Post>();
+            for (PostEntity postEntity : iterable) {
+                LOGGER.info("postEntity_" + postEntity.toString());
+                postListToReturn.add(mapper.entityToApi(postEntity));
+            }
+            if (postListToReturn.size() == 0) {
+                LOGGER.debug("No posts retreived from repository");
+            }
+            postListToReturn.forEach(item -> LOGGER.info(item.toString()));
 
-        List<Post> postListToReturn = new ArrayList<Post>();
-        for (PostEntity postEntity : iterable) {
-            LOGGER.info("postEntity_" + postEntity.toString());
-            postListToReturn.add(mapper.entityToApi(postEntity));
+            postsToReturn.setOperation(OperationKafka.SUCCESS);
+            postsToReturn.setPosts(postListToReturn);
+        }else{
+            postsToReturn.setOperation(OperationKafka.FAILURE);
         }
-        if (postListToReturn.size() == 0) {
-            LOGGER.debug("No posts retreived from repository");
-        }
-        postListToReturn.forEach(item -> LOGGER.info(item.toString()));
-
-        postsToReturn.setOperation(OperationKafka.SUCCESS);
-        postsToReturn.setPosts(postListToReturn);
-
         LOGGER.info("Ending");
         return postsToReturn;
     }

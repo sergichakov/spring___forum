@@ -78,7 +78,7 @@ public class DirectoryRestController {
         return deferredResult;
     }
 
-    @RequestMapping(value = "/directoriesweb/maxtopic/{topicId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/directoriesweb/maxtopic", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public DeferredResult<ResponseEntity<Long>> getMaxTopicIdFromDirectory(){//@PathVariable("topicId") Long topicId) { // String Id
         LOGGER.info("Start");
         LOGGER.debug("Get maxTopic from directories table");

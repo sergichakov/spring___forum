@@ -2,7 +2,20 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <annotationProcessing>
-      <profile name="Annotation profile for security-template" enabled="true">
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="authorization-server (1)" />
+        <module name="topic-web" />
+        <module name="directory-web" />
+        <module name="post-web" />
+        <module name="resource-server_2" />
+        <module name="kafka-request-reply-util" />
+        <module name="eureka-server" />
+        <module name="auth-gateway-server (1)" />
+      </profile>
+      <profile name="Annotation profile for Forum-template" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -11,35 +24,30 @@
           <entry name="/media/user/downloads1/.m2/repository/org/mapstruct/mapstruct-processor/1.5.5.Final/mapstruct-processor-1.5.5.Final.jar" />
           <entry name="/media/user/downloads1/.m2/repository/org/mapstruct/mapstruct/1.5.5.Final/mapstruct-1.5.5.Final.jar" />
         </processorPath>
-        <module name="post-Server-Microservice" />
-        <module name="topic-Server-Microservice" />
-        <module name="directory-Server-Microservice" />
-      </profile>
-      <profile name="Maven default annotation processors profile" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <module name="directory-Web-Microservice" />
-        <module name="authorization-server" />
-        <module name="resource-server" />
-        <module name="post-Web-Microservice" />
-        <module name="auth-gateway-server" />
-        <module name="kafka-request-reply-util" />
-        <module name="topic-Web-Microservice" />
+        <module name="directory-server" />
+        <module name="post-server" />
+        <module name="topic-server" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="auth-gateway-server" target="17" />
+      <module name="authorization-server" target="17" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="auth-gateway-server" options="-parameters" />
+      <module name="auth-gateway-server (1)" options="-parameters" />
       <module name="authorization-server" options="-parameters" />
-      <module name="directory-Server-Microservice" options="-parameters" />
-      <module name="directory-Web-Microservice" options="-parameters" />
-      <module name="post-Server-Microservice" options="-parameters" />
-      <module name="post-Web-Microservice" options="-parameters" />
-      <module name="resource-server" options="-parameters" />
-      <module name="topic-Server-Microservice" options="-parameters" />
-      <module name="topic-Web-Microservice" options="-parameters" />
+      <module name="authorization-server (1)" options="-parameters" />
+      <module name="directory-server" options="-parameters" />
+      <module name="directory-web" options="-parameters" />
+      <module name="eureka-server" options="-parameters" />
+      <module name="post-server" options="-parameters" />
+      <module name="post-web" options="-parameters" />
+      <module name="resource-server_2" options="-parameters" />
+      <module name="topic-server" options="-parameters" />
+      <module name="topic-web" options="-parameters" />
     </option>
   </component>
 </project>

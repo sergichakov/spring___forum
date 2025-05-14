@@ -67,13 +67,15 @@ public class TopicRestController {
         }
 
         Long headerUserId = Long.parseLong(userId);
-        UserDetailsRole headerUserRole = UserDetailsRole.valueOf(getHeaderUserId(token, "role"));
-        if (headerUserId == null || headerUserRole == null) {
+        String headerRoleString = getHeaderUserId(token, "role");
+
+        if (headerRoleString == null) {
             LOGGER.info("headerUserId or UserDetailsRole is null");
             DeferredResult<ResponseEntity<CollectionModel<TopicRest>>> deferredResult = new DeferredResult<>();
             deferredResult.setResult(new ResponseEntity<CollectionModel<TopicRest>>(HttpStatus.UNAUTHORIZED));
             return deferredResult;
         }
+        UserDetailsRole headerUserRole = UserDetailsRole.valueOf(headerRoleString);
         DeferredResult<ResponseEntity<CollectionModel<TopicRest>>> deferredResult =
                 topicWebService.listTopic(page, numberPerPage, headerUserId, headerUserRole, allUserTopicsBool);
 
@@ -99,8 +101,14 @@ public class TopicRestController {
             //throw new org.springframework.security.access.AccessDeniedException("Should have Authorization Bearer header");
         }
         Long headerUserId = Long.parseLong(userId);
-        UserDetailsRole headerUserRole = UserDetailsRole.valueOf(getHeaderUserId(token, "role"));
-
+        String headerRoleString = getHeaderUserId(token, "role");
+        if (headerRoleString == null) {
+            LOGGER.info("headerUserId or UserDetailsRole is null");
+            DeferredResult<ResponseEntity<TopicRest>> deferredResult = new DeferredResult<>();
+            deferredResult.setResult(new ResponseEntity<TopicRest>(HttpStatus.UNAUTHORIZED));
+            return deferredResult;
+        }
+        UserDetailsRole headerUserRole = UserDetailsRole.valueOf(headerRoleString);
         DeferredResult<ResponseEntity<TopicRest>> deferredResult
                 = topicWebService.getTopic(id, headerUserId, headerUserRole);
 
@@ -118,7 +126,15 @@ public class TopicRestController {
         LOGGER.debug("Creating Product with code: {}");
 
         LOGGER.info("Thread : " + Thread.currentThread());
-        Long headerUserId = Long.parseLong(getHeaderUserId(token, "userId"));
+        String userId = getHeaderUserId(token, "userId");
+        if (null == userId) {
+            LOGGER.info("JWT token Id is null");
+            DeferredResult<ResponseEntity<TopicRest>> deferredResult = new DeferredResult<>();
+            deferredResult.setResult(new ResponseEntity<TopicRest>(HttpStatus.UNAUTHORIZED));
+            return deferredResult;
+            //throw new org.springframework.security.access.AccessDeniedException("Should have Authorization Bearer header");
+        }
+        Long headerUserId = Long.parseLong(userId);
         DeferredResult<ResponseEntity<TopicRest>> deferredResult = topicWebService.createTopic(topicDto, headerUserId);
         LOGGER.info("Ending");
         return deferredResult;
@@ -135,8 +151,23 @@ public class TopicRestController {
 
         LOGGER.info("Thread : " + Thread.currentThread());
         LOGGER.info("JWT token" + token);
-        Long headerUserId = Long.parseLong(getHeaderUserId(token, "userId"));
-        UserDetailsRole headerUserRole = UserDetailsRole.valueOf(getHeaderUserId(token, "role"));
+        String userId = getHeaderUserId(token, "userId");
+        if (null == userId) {
+            LOGGER.info("JWT token Id is null");
+            DeferredResult<ResponseEntity<TopicRest>> deferredResult = new DeferredResult<>();
+            deferredResult.setResult(new ResponseEntity<TopicRest>(HttpStatus.UNAUTHORIZED));
+            return deferredResult;
+            //throw new org.springframework.security.access.AccessDeniedException("Should have Authorization Bearer header");
+        }
+        Long headerUserId = Long.parseLong(userId);
+        String headerRoleString = getHeaderUserId(token, "role");
+        if (headerRoleString == null) {
+            LOGGER.info("headerUserId or UserDetailsRole is null");
+            DeferredResult<ResponseEntity<TopicRest>> deferredResult = new DeferredResult<>();
+            deferredResult.setResult(new ResponseEntity<TopicRest>(HttpStatus.UNAUTHORIZED));
+            return deferredResult;
+        }
+        UserDetailsRole headerUserRole = UserDetailsRole.valueOf(headerRoleString);
 //        String token2 = null;
 //
 //        LOGGER.info("token2 = ", token2);
@@ -149,16 +180,33 @@ public class TopicRestController {
 
     @RequestMapping(value = "/topicsweb/{postId}", method = RequestMethod.DELETE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public DeferredResult<ResponseEntity<Topic>> deletePost(
+    public DeferredResult<ResponseEntity<TopicRest>> deletePost(
             @PathVariable("postId") Long id,
             @RequestHeader(name = "Authorization", required = false) String token) { // String Id
 
         LOGGER.info("Start");
         LOGGER.debug("Deleting Product with id: {}", id);
-        Long headerUserId = Long.parseLong(getHeaderUserId(token, "userId"));
-        UserDetailsRole headerUserRole = UserDetailsRole.valueOf(getHeaderUserId(token, "role"));
+//        Long headerUserId = Long.parseLong(getHeaderUserId(token, "userId"));
+        String userId = getHeaderUserId(token, "userId");
+        if (null == userId) {
+            LOGGER.info("JWT token Id is null");
+            DeferredResult<ResponseEntity<TopicRest>> deferredResult = new DeferredResult<>();
+            deferredResult.setResult(new ResponseEntity<TopicRest>(HttpStatus.UNAUTHORIZED));
+            return deferredResult;
+            //throw new org.springframework.security.access.AccessDeniedException("Should have Authorization Bearer header");
+        }
+        Long headerUserId = Long.parseLong(userId);
+//        UserDetailsRole headerUserRole = UserDetailsRole.valueOf(getHeaderUserId(token, "role"));
+        String headerRoleString = getHeaderUserId(token, "role");
+        if (headerRoleString == null) {
+            LOGGER.info("headerUserId or UserDetailsRole is null");
+            DeferredResult<ResponseEntity<TopicRest>> deferredResult = new DeferredResult<>();
+            deferredResult.setResult(new ResponseEntity<TopicRest>(HttpStatus.UNAUTHORIZED));
+            return deferredResult;
+        }
+        UserDetailsRole headerUserRole = UserDetailsRole.valueOf(headerRoleString);
         LOGGER.info("Thread : " + Thread.currentThread());
-        DeferredResult<ResponseEntity<Topic>> deferredResult = topicWebService.deletePost(id, headerUserId, headerUserRole);
+        DeferredResult<ResponseEntity<TopicRest>> deferredResult = topicWebService.deletePost(id, headerUserId, headerUserRole);
 
         LOGGER.info("Ending");
         return deferredResult;

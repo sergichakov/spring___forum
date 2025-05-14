@@ -4,21 +4,25 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.example</groupId>
-    <artifactId>security-template</artifactId>
+    <groupId>com.forum</groupId>
+    <artifactId>Forum-template</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
+        <module>eureka-server</module>
+<!--        <module>authspring-cloud/authorization-server</module>
+        <module>authspring-cloud/gateway</module> -->
         <module>authorization-server</module>
-        <module>auth-gateway-server</module>
-        <module>resource-server</module>
-        <module>TopicServer</module>
-        <module>TopicWeb</module>
-        <module>PostServer</module>
-        <module>PostWeb</module>
-        <module>DirectoryServer</module>
-        <module>DirectoryWeb</module>
+                <module>auth-gateway-server</module>
+  <!--     <module>resource-server</module>-->
+        <module>resource-service</module>
+        <module>topic-server</module>
+        <module>topic-web</module>
+        <module>post-server</module>
+        <module>post-web</module>
+        <module>directory-server</module>
+        <module>directory-web</module>
         <module>kafka-request-reply-util</module>
     </modules>
 

@@ -7,6 +7,7 @@ import com.forum.directory.web.DirectoryRestController;
 import com.forum.directory.web.hateoas.model.DirectoryRest;
 import com.forum.directory.web.model.DirectoryWebDto;
 import com.forum.kafka.request_reply_util.CompletableFutureReplyingKafkaOperations;
+import com.forum.directory.kafka.event.OperationDirectoryKafka;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,25 +65,28 @@ public class DirectoryWebServiceImpl implements DirectoryWebService {
         CompletableFuture<Directories> completableFuture = replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
 
         completableFuture.thenAccept(directories -> {
+            if (directories.getOperation().equals(OperationDirectoryKafka.FAILURE)) {
+                deferredResult.setResult(new ResponseEntity<CollectionModel<DirectoryRest>>(HttpStatus.NOT_FOUND));
+                return;
+            }else {
+                List<Directory> directoryList = directories.getDirectories();
 
-            List<Directory> directoryList = directories.getDirectories();
+                Link links[] = {linkTo(methodOn(DirectoryRestController.class).getAllDirectories(page, numberPerPage)).withSelfRel(),
+                        linkTo(methodOn(DirectoryRestController.class).getAllDirectories(page, numberPerPage)).withRel("getAllDirectories")};
 
-            Link links[] = {linkTo(methodOn(DirectoryRestController.class).getAllDirectories(page, numberPerPage)).withSelfRel(),
-                    linkTo(methodOn(DirectoryRestController.class).getAllDirectories(page, numberPerPage)).withRel("getAllDirectories")};
+                List<DirectoryRest> list = new ArrayList<DirectoryRest>();
+                for (Directory directory : directoryList) {
+                    DirectoryRest directoryHateoas = convertEntityToHateoasEntity(directory);
+                    list.add(directoryHateoas
+                            .add(linkTo(methodOn(DirectoryRestController.class).getDirectory(directoryHateoas.getDirectoryId()))
+                                    .withSelfRel()));
 
-            List<DirectoryRest> list = new ArrayList<DirectoryRest>();
-            for (Directory directory : directoryList) {
-                DirectoryRest directoryHateoas = convertEntityToHateoasEntity(directory);
-                list.add(directoryHateoas
-                        .add(linkTo(methodOn(DirectoryRestController.class).getDirectory(directoryHateoas.getDirectoryId()))
-                                .withSelfRel()));
+                }
+                list.forEach(item -> LOGGER.debug(item.toString()));
+                CollectionModel<DirectoryRest> result = CollectionModel.of(list, links);
 
+                deferredResult.setResult(new ResponseEntity<CollectionModel<DirectoryRest>>(result, HttpStatus.OK));
             }
-            list.forEach(item -> LOGGER.debug(item.toString()));
-            CollectionModel<DirectoryRest> result = CollectionModel.of(list, links);
-
-            deferredResult.setResult(new ResponseEntity<CollectionModel<DirectoryRest>>(result, HttpStatus.OK));
-
         }).exceptionally(ex -> {
             LOGGER.error(ex.getMessage());
             return null;
@@ -106,26 +110,29 @@ public class DirectoryWebServiceImpl implements DirectoryWebService {
         CompletableFuture<Directories> completableFuture = replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
 
         completableFuture.thenAccept(directories -> {
-
-            List<Directory> directoryList = directories.getDirectories();
-            Directory directoryRetreived = null;
-            Long directoryId = null; // String directoryId
-
-            if (directoryList.iterator().hasNext()) {
-                directoryRetreived = directoryList.iterator().next();
-                directoryId = directoryRetreived.getDirectoryId();
-                LOGGER.debug("Directory with directoryId : {} retreived from Backend Microservice", directoryId);
-
-                DirectoryRest directoryHateoas = convertEntityToHateoasEntity(directoryRetreived);
-                directoryHateoas.add(linkTo(methodOn(DirectoryRestController.class).getDirectory(directoryHateoas.getDirectoryId())).withSelfRel());
-
-                deferredResult.setResult(new ResponseEntity<DirectoryRest>(directoryHateoas, HttpStatus.OK));
-
-            } else {
-                LOGGER.debug("Directory with directoryId : {} not retreived from Backend Microservice", id);
+            if (directories.getOperation().equals(OperationDirectoryKafka.FAILURE)) {
                 deferredResult.setResult(new ResponseEntity<DirectoryRest>(HttpStatus.NOT_FOUND));
-            }
+                return;
+            }else {
+                List<Directory> directoryList = directories.getDirectories();
+                Directory directoryRetreived = null;
+                Long directoryId = null; // String directoryId
 
+                if (directoryList.iterator().hasNext()) {
+                    directoryRetreived = directoryList.iterator().next();
+                    directoryId = directoryRetreived.getDirectoryId();
+                    LOGGER.debug("Directory with directoryId : {} retreived from Backend Microservice", directoryId);
+
+                    DirectoryRest directoryHateoas = convertEntityToHateoasEntity(directoryRetreived);
+                    directoryHateoas.add(linkTo(methodOn(DirectoryRestController.class).getDirectory(directoryHateoas.getDirectoryId())).withSelfRel());
+
+                    deferredResult.setResult(new ResponseEntity<DirectoryRest>(directoryHateoas, HttpStatus.OK));
+
+                } else {
+                    LOGGER.debug("Directory with directoryId : {} not retreived from Backend Microservice", id);
+                    deferredResult.setResult(new ResponseEntity<DirectoryRest>(HttpStatus.NOT_FOUND));
+                }
+            }
         }).exceptionally(ex -> {
             LOGGER.error(ex.getMessage());
             return null;
@@ -148,25 +155,28 @@ public class DirectoryWebServiceImpl implements DirectoryWebService {
         CompletableFuture<Directories> completableFuture = replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
 
         completableFuture.thenAccept(directories -> {
+            if (directories.getOperation().equals(OperationDirectoryKafka.FAILURE)) {
+                deferredResult.setResult(new ResponseEntity<DirectoryRest>(HttpStatus.NOT_FOUND));
+                return;
+            }else {
+                List<Directory> directoryList = directories.getDirectories();
+                Directory directoryRetreived = null;
+                Long directoryId = null;
 
-            List<Directory> directoryList = directories.getDirectories();
-            Directory directoryRetreived = null;
-            Long directoryId = null;
+                if (directoryList.iterator().hasNext()) {
+                    directoryRetreived = directoryList.iterator().next();
+                    directoryId = directoryRetreived.getDirectoryId();
+                    LOGGER.debug("Directory with directoryId : {} created by Backend Microservice", directoryId);
 
-            if (directoryList.iterator().hasNext()) {
-                directoryRetreived = directoryList.iterator().next();
-                directoryId = directoryRetreived.getDirectoryId();
-                LOGGER.debug("Directory with directoryId : {} created by Backend Microservice", directoryId);
+                    DirectoryRest directoryHateoas = convertEntityToHateoasEntity(directoryRetreived);
+                    directoryHateoas.add(linkTo(methodOn(DirectoryRestController.class).getDirectory(directoryHateoas.getDirectoryId())).withSelfRel());
+                    deferredResult.setResult(new ResponseEntity<DirectoryRest>(directoryHateoas, HttpStatus.OK));
 
-                DirectoryRest directoryHateoas = convertEntityToHateoasEntity(directoryRetreived);
-                directoryHateoas.add(linkTo(methodOn(DirectoryRestController.class).getDirectory(directoryHateoas.getDirectoryId())).withSelfRel());
-                deferredResult.setResult(new ResponseEntity<DirectoryRest>(directoryHateoas, HttpStatus.OK));
-
-            } else {
-                LOGGER.debug("Directory with code : {} not created by Backend Microservice");
-                deferredResult.setResult(new ResponseEntity<DirectoryRest>(HttpStatus.CONFLICT));
+                } else {
+                    LOGGER.debug("Directory with code : {} not created by Backend Microservice");
+                    deferredResult.setResult(new ResponseEntity<DirectoryRest>(HttpStatus.CONFLICT));
+                }
             }
-
         }).exceptionally(ex -> {
             LOGGER.error(ex.getMessage());
             return null;
@@ -190,26 +200,28 @@ public class DirectoryWebServiceImpl implements DirectoryWebService {
         CompletableFuture<Directories> completableFuture = replyingKafkaTemplate.requestReply(requestTopic, directoriesRequest);
 
         completableFuture.thenAccept(directories -> {
-
-            List<Directory> directoryList = directories.getDirectories();
-            Directory directoryRetreived = null;
-            Long directoryId = null;
-
-            if (directoryList.iterator().hasNext()) {
-                directoryRetreived = directoryList.iterator().next();
-                directoryId = directoryRetreived.getDirectoryId();
-                LOGGER.debug("Directory with directoryId : {} updated by Backend Microservice", directoryId);
-
-                DirectoryRest directoryHateoas = convertEntityToHateoasEntity(directoryRetreived);
-                directoryHateoas.add(linkTo(methodOn(DirectoryRestController.class).getDirectory(directoryHateoas.getDirectoryId())).withSelfRel());
-                deferredResult.setResult(new ResponseEntity<DirectoryRest>(directoryHateoas, HttpStatus.OK));
-
-            } else {
-                LOGGER.debug("Directory  with code : {} not updated by Backend Microservice", directoryId);
+            if (directories.getOperation().equals(OperationDirectoryKafka.FAILURE)) {
                 deferredResult.setResult(new ResponseEntity<DirectoryRest>(HttpStatus.NOT_FOUND));
+                return;
+            }else {
+                List<Directory> directoryList = directories.getDirectories();
+                Directory directoryRetreived = null;
+                Long directoryId = null;
+
+                if (directoryList.iterator().hasNext()) {
+                    directoryRetreived = directoryList.iterator().next();
+                    directoryId = directoryRetreived.getDirectoryId();
+                    LOGGER.debug("Directory with directoryId : {} updated by Backend Microservice", directoryId);
+
+                    DirectoryRest directoryHateoas = convertEntityToHateoasEntity(directoryRetreived);
+                    directoryHateoas.add(linkTo(methodOn(DirectoryRestController.class).getDirectory(directoryHateoas.getDirectoryId())).withSelfRel());
+                    deferredResult.setResult(new ResponseEntity<DirectoryRest>(directoryHateoas, HttpStatus.OK));
+
+                } else {
+                    LOGGER.debug("Directory  with code : {} not updated by Backend Microservice", directoryId);
+                    deferredResult.setResult(new ResponseEntity<DirectoryRest>(HttpStatus.NOT_FOUND));
+                }
             }
-
-
         }).exceptionally(ex -> {
             LOGGER.error(ex.getMessage());
             return null;

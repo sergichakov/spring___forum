@@ -43,8 +43,10 @@ import org.springframework.context.annotation.Configuration;
                         'PWi0bOo0Ne7MgPFlPY0VxfglG3RnUHO-d5M4RbNLBz4gG3ujiRDF8uZvjXHhRJaMxjY5WPUrZS7gh1jdFOPQUO55COo9Vx55aCV-6MRjHJeKPj0dcwrnPumRNc_9gWDd'<br>
                         '&redirect_uri=http://localhost:8080/swagger-ui/index.html' <br>
                         --header<br> 'Authorization: Basic Z2F0ZXdheTpzZWNyZXQ='<br>
-                          Из возвращенного JSON скопируйте access token и вставте в Authorize -> JWT token</p>
-                        
+                          Из возвращенного JSON скопируйте access token и вставте в Authorize -> JWT token</p> 
+                        <p>Admin при создании топика сохраняет первый Пост нового топика в /postsweb/admin/postsweb.</p>
+                        <p>Пользователь может создавать, изменять, удалять свои посты </p>
+                        <p>Просмотр конкретного топика осуществляется посредством эндпоинта /postsweb/topic/{topicid}</p>
                         """,
                 contact = @Contact(url = "http://localhost:8080/", email = "sergejsmelchakov@gmail.com")
         ),

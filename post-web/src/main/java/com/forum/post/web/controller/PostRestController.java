@@ -16,6 +16,7 @@ import com.forum.post.web.model.PostWebDto;
 import com.forum.post.web.service.PostWebService;
 //import org.springframework.security.core.context.SecurityContextHolder;
 //import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.http.MediaType;
@@ -105,14 +106,20 @@ public class PostRestController {
     	LOGGER.debug("Creating Post with code: {}");//, directory.getCode());
     	
 		LOGGER.info("Thread : " + Thread.currentThread());
-        Long headerUserId= Long.parseLong(getHeaderUserId(token,"userId"));
-
+        String userId = getHeaderUserId(token, "userId");
+        if (null == userId) {
+            LOGGER.info("JWT token Id is null");
+            DeferredResult<ResponseEntity<PostRest>> deferredResult = new DeferredResult<>();
+            deferredResult.setResult(new ResponseEntity<PostRest>(HttpStatus.UNAUTHORIZED));
+            return deferredResult;
+        }
+        Long headerUserId = Long.parseLong(userId);
 		DeferredResult<ResponseEntity<PostRest>> deferredResult = postWebService.createPost(postWebDto, headerUserId);
 
         LOGGER.info("Ending");
         return deferredResult;
     }
-    @RequestMapping(value = "/admin/postsweb", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/postweb/admin/postsweb", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public DeferredResult<ResponseEntity<PostRest>> addPostAsAdmin(@RequestBody PostWebDto postWebDto) throws ExecutionException, InterruptedException {
         DeferredResult<ResponseEntity<PostRest>> deferredResult = postWebService.createPost(postWebDto, postWebDto.getUserOwnerId());
         return deferredResult;
@@ -127,8 +134,14 @@ public class PostRestController {
         
 		LOGGER.info("Thread : " + Thread.currentThread());
         LOGGER.info("JWT token"+token);
-        Long headerUserId= Long.parseLong(getHeaderUserId(token,"userId"));
-
+        String userId = getHeaderUserId(token, "userId");
+        if (null == userId) {
+            LOGGER.info("JWT token Id is null");
+            DeferredResult<ResponseEntity<PostRest>> deferredResult = new DeferredResult<>();
+            deferredResult.setResult(new ResponseEntity<PostRest>(HttpStatus.UNAUTHORIZED));
+            return deferredResult;
+        }
+        Long headerUserId = Long.parseLong(userId);
 		DeferredResult<ResponseEntity<PostRest>> deferredResult = postWebService.updatePost(id, post, headerUserId);
 
         LOGGER.info("Ending");
@@ -136,16 +149,21 @@ public class PostRestController {
     }
 
     @RequestMapping(value = "/postsweb/{postId}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public DeferredResult<ResponseEntity<Post>> deletePost(@PathVariable("postId")UUID id,
+    public DeferredResult<ResponseEntity<PostRest>> deletePost(@PathVariable("postId")UUID id,
                                                            @RequestHeader (name="Authorization", required = false) String token) { // String Id
     	
     	LOGGER.info("Start");
     	LOGGER.debug("Deleting Product with id: {}", id);
-        Long headerUserId= Long.parseLong(getHeaderUserId(token,"userId"));
-
-
+        String userId = getHeaderUserId(token, "userId");
+        if (null == userId) {
+            LOGGER.info("JWT token Id is null");
+            DeferredResult<ResponseEntity<PostRest>> deferredResult = new DeferredResult<>();
+            deferredResult.setResult(new ResponseEntity<PostRest>(HttpStatus.UNAUTHORIZED));
+            return deferredResult;
+        }
+        Long headerUserId = Long.parseLong(userId);
 		LOGGER.info("Thread : " + Thread.currentThread());
-		DeferredResult<ResponseEntity<Post>> deferredResult = postWebService.deletePost(id, headerUserId);
+		DeferredResult<ResponseEntity<PostRest>> deferredResult = postWebService.deletePost(id, headerUserId);
 
         LOGGER.info("Ending");
         return deferredResult;
@@ -157,8 +175,11 @@ public class PostRestController {
 
     private String getHeaderUserId(String token, String headerName){
 
+        if (null == token || token.isEmpty()) {
+            return null;
+        }
         String jwtToken = token.split("Bearer ")[1];
-        if(null==token || token.isEmpty() || !jwtService.isTokenValid(jwtToken)){
+        if (!jwtService.isTokenValid(jwtToken)) {
             return null;
         }
         String[] tokenChunks = token.split("\\.");

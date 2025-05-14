@@ -15,5 +15,5 @@ public interface TopicWebService {
     DeferredResult<ResponseEntity<CollectionModel<TopicRest>>> listTopic(Integer page, Integer numberPerPage, Long headerUserId, UserDetailsRole role, Boolean allUserTopics);
     DeferredResult<ResponseEntity<TopicRest>> getTopic(Long id, Long headerUserId, UserDetailsRole role);
     DeferredResult<ResponseEntity<TopicRest>> updatePost(Long id, TopicWebDto post, Long headerUserId, UserDetailsRole role) ; //(String id, Post post)
-    DeferredResult<ResponseEntity<Topic>> deletePost(Long id, Long headerUserId, UserDetailsRole role);
+    DeferredResult<ResponseEntity<TopicRest>> deletePost(Long id, Long headerUserId, UserDetailsRole role);
 }

@@ -15,5 +15,5 @@ import java.util.UUID;
 public interface PostPagingRepository extends PagingAndSortingRepository<PostEntity, UUID> { // было Long
     public List<PostEntity> findByPostId(@Param("topicId") UUID postId, Pageable pageable);
     Page<PostEntity> findAllByOrderByTopicIdAsc(Pageable pageable);
-    Page<PostEntity> findAllByTopicIdOrderByTopicIdAsc(Long topicId, Pageable pageable);
+    Page<PostEntity> findAllByTopicIdOrderByCreationDateAsc(Long topicId, Pageable pageable);
 }

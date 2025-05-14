@@ -95,17 +95,23 @@ public class DirectoryListener {
             Long directoryId = ((Directory) directories.getDirectories().iterator().next()).getDirectoryId();
             LOGGER.debug("Fetching Directory with directoryId : {}", directoryId);
 
-            DirectoryThemeEntity directoryThemeEntity = directoryRepository.findById((directoryId)).get(); //findById(Long.parseLong(directoryId)).get();
-
-            directoriesToReturn.setOperation(OperationDirectoryKafka.SUCCESS);
-            if (directoryThemeEntity == null) {
-                LOGGER.debug("Directory with directoryId : {} not found in repository", directoryId);
-            } else {
+//            DirectoryThemeEntity directoryThemeEntity = directoryRepository.findById((directoryId)).get(); //findById(Long.parseLong(directoryId)).get();
+            Optional<DirectoryThemeEntity>directoryFoundOptional = directoryRepository.findById(directoryId);
+            if ( directoryFoundOptional.isPresent()) {
                 LOGGER.debug("Directory with directoryId : {} found in repository", directoryId);
+                DirectoryThemeEntity directoryThemeEntity = directoryFoundOptional.get();
                 List<Directory> directoryListToReturn = new ArrayList<Directory>();
                 directoryListToReturn.add(mapper.entityToApi(directoryThemeEntity));
                 directoriesToReturn.setDirectories(directoryListToReturn);
+                directoriesToReturn.setOperation(OperationDirectoryKafka.SUCCESS);
+
+            } else {
+            //if (directoryThemeEntity == null) {
+                LOGGER.debug("Directory with directoryId : {} not found in repository", directoryId);
+
+                directoriesToReturn.setOperation(OperationDirectoryKafka.FAILURE);
             }
+
         } else {
             LOGGER.debug("Directory cannot be fetched, since param is null or empty");
             directoriesToReturn.setOperation(OperationDirectoryKafka.FAILURE);
@@ -178,8 +184,11 @@ public class DirectoryListener {
             directoryToUpdate = directories.getDirectories().iterator().next();
             LOGGER.debug("Attempting to find a Directory with id: {} to update", directoryToUpdate.getDirectoryId());
 
-            directoryFoundEntity = directoryRepository.findById((directoryToUpdate.getDirectoryId())).get();//findById(Long.parseLong(directoryToUpdate.getDirectoryId())).get();
-            if (null != directoryFoundEntity) {
+//            directoryFoundEntity = directoryRepository.findById((directoryToUpdate.getDirectoryId())).get();//findById(Long.parseLong(directoryToUpdate.getDirectoryId())).get();
+            Optional<DirectoryThemeEntity>directoryFoundOptional = directoryRepository.findById((directoryToUpdate.getDirectoryId()));
+            if (directoryFoundOptional.isPresent()) {
+//            if (null != directoryFoundEntity) {
+                directoryFoundEntity = directoryFoundOptional.get();
                 LOGGER.debug("A Directory with id {} exist, attempting to update", directoryFoundEntity.getDirectoryId());
                 directoriesToReturn.setOperation(OperationDirectoryKafka.SUCCESS);
                 DirectoryThemeEntity dirConvertEntity = mapper.apiToEntity(directoryToUpdate);
@@ -215,8 +224,9 @@ public class DirectoryListener {
             directoryToDelete = directories.getDirectories().iterator().next();
             LOGGER.debug("Attempting to find a Directory with id: {} to delete", directoryToDelete.getDirectoryId());
 
-            directoryFoundEntity = directoryRepository.findById((directoryToDelete.getDirectoryId())).get();
-            if (null != directoryFoundEntity) {
+            Optional<DirectoryThemeEntity>directoryFoundOptional = directoryRepository.findById((directoryToDelete.getDirectoryId()));
+            if (directoryFoundOptional.isPresent()) {
+                directoryFoundEntity = directoryFoundOptional.get();
                 LOGGER.debug("A Directory with id {} exist, attempting to delete", directoryFoundEntity.getDirectoryId());
                 directoryRepository.delete(mapper.apiToEntity(directoryToDelete));
                 directoriesToReturn.setOperation(OperationDirectoryKafka.SUCCESS);
@@ -248,7 +258,10 @@ public class DirectoryListener {
             numberPerPage = 1000;
         }
         Page<DirectoryThemeEntity> directoryEntityPages = directoryPagingRepository.findAllByOrderByOrderAsc(PageRequest.of(page, numberPerPage));
-
+        if( !directoryEntityPages.hasContent()){
+            directoriesToReturn.setOperation(OperationDirectoryKafka.FAILURE);
+            return directoriesToReturn;
+        }
         //Iterable<DirectoryThemeEntity> iterable = directoryRepository.findAll();
 
         List<Directory> directoryListToReturn = new ArrayList<Directory>();
@@ -272,6 +285,10 @@ public class DirectoryListener {
         LOGGER.info("Start");
         Directories directoriesToReturn = new Directories();
         Optional<DirectoryThemeEntity> optionalDirThemeEntity = directoryRepository.findTopByOrderByTopicIdDesc();
+        if( !optionalDirThemeEntity.isPresent()){
+            directoriesToReturn.setOperation(OperationDirectoryKafka.FAILURE);
+            return directoriesToReturn;
+        }
         DirectoryThemeEntity dirEntity=optionalDirThemeEntity.get();
         Long maxTopic= dirEntity.getTopicId();
         //Long maxTopic = directoryRepository.findTopByOrderByTopicIdDesc();//findTopByTopicId();//topicId);
