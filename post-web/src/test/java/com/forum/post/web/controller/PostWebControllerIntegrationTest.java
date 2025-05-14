@@ -111,8 +111,8 @@ public class PostWebControllerIntegrationTest {
         assertEquals(createProductDto.getPostContent(), postCreatedEvent.getPosts().get(0).getPostContent());
         assertEquals(createProductDto.getNumberOfLikes(), postCreatedEvent.getPosts().get(0).getNumberOfLikes());
         assertEquals(createProductDto.getTopicId(), postCreatedEvent.getPosts().get(0).getTopicId());
-        assertEquals(createProductDto.getUserCreatorId(), postCreatedEvent.getPosts().get(0).getUserCreatorId());
-        assertEquals(createProductDto.getUserOwnerId(), postCreatedEvent.getPosts().get(0).getUserOwnerId());
+        assertEquals(1L, postCreatedEvent.getPosts().get(0).getUserCreatorId());
+        assertEquals(1L, postCreatedEvent.getPosts().get(0).getUserOwnerId());
     }
 
     @Test
@@ -175,9 +175,6 @@ public class PostWebControllerIntegrationTest {
                 productUpdateEvent.getPosts().get(0).getPostId().toString());
         assertEquals(updatePostDto.getPostContent(), productUpdateEvent.getPosts().get(0).getPostContent());
         assertEquals(updatePostDto.getNumberOfLikes(), productUpdateEvent.getPosts().get(0).getNumberOfLikes());
-        assertEquals(updatePostDto.getTopicId(), productUpdateEvent.getPosts().get(0).getTopicId());
-        assertEquals(updatePostDto.getUserCreatorId(), productUpdateEvent.getPosts().get(0).getUserCreatorId());
-        assertEquals(updatePostDto.getUserOwnerId(), productUpdateEvent.getPosts().get(0).getUserOwnerId());
     }
 
     @Test

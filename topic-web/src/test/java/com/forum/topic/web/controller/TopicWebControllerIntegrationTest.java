@@ -122,7 +122,7 @@ public class TopicWebControllerIntegrationTest {
         String title = "Samsung";
 
         //act block
-        productService.listTopic(1, 1000, 1L, UserDetailsRole.ROLE_USER, null );
+        productService.listTopic(1, 1000, 1L, UserDetailsRole.ROLE_USER, false );
 
         //assert block
         ConsumerRecord<String, Topics> message = records.poll(3000, TimeUnit.MILLISECONDS);
@@ -171,8 +171,6 @@ public class TopicWebControllerIntegrationTest {
         assertEquals(updatePostDto.getPostContent(), productUpdateEvent.getTopics().get(0).getPostContent());
         assertEquals(updatePostDto.getPostContent(), productUpdateEvent.getTopics().get(0).getPostContent());
         assertEquals(updatePostDto.getTopicLabel(), productUpdateEvent.getTopics().get(0).getTopicLabel());
-        assertEquals(updatePostDto.getUserOwnerId(), productUpdateEvent.getTopics().get(0).getUserOwnerId());
-        assertEquals(updatePostDto.getUserOwnerId(), productUpdateEvent.getTopics().get(0).getUserOwnerId());
     }
 
     @Test

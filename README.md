@@ -1,4 +1,6 @@
-Предварительно нужно нужно собрать и установить библиотеку kafka-request-reply-util
+Предварительно нужно нужно собрать и установить библиотеку kafka-request-reply-util## Сборка
+- Собирите коммандой mvn package -P prod
+- Предварительно нужно нужно собрать и установить библиотеку kafka-request-reply-util коммандой mvn install -pl kafka-request-reply-util -am -P prod
 ## Приложение Forum 
 Приложение построено согласно микросервисной архитектуре. Состоит следующих микросервисов:
 - [topic-web - порт 18071](http://localhost:18071/topicsweb/swagger-ui/index.html)
